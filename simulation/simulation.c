@@ -1,7 +1,8 @@
 /* Functions pertinent to the outer simulation steps */
 
 #include <math.h>
-
+#include <stdio.h>
+#include <omp.h>
 #include "lbm.h"
 
 void timestep(const param_t params, const accel_area_t accel_area,
@@ -51,6 +52,7 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
     {
         ii = accel_area.idx;
 
+#pragma omp for
         for (jj = 0; jj < params.nx; jj++)
         {
             /* if the cell is not occupied and

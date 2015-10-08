@@ -1,6 +1,6 @@
 CC=gcc
 
-CFLAGS=-O3 -g -Wall
+CFLAGS=-O3 -g -Wall -fopenmp
 
 EXE=lbm
 

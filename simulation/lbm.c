@@ -55,6 +55,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <omp.h>
 
 #include "lbm.h"
 
@@ -64,6 +65,9 @@
 */
 int main(int argc, char* argv[])
 {
+    //OpenMP Setup
+    omp_set_num_threads(16);
+
     char * final_state_file = NULL;
     char * av_vels_file = NULL;
     char * param_file = NULL;
