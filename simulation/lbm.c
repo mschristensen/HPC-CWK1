@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
     param_t  params;              /* struct to hold parameter values */
     speed_t* cells     = NULL;    /* grid containing fluid densities */
     speed_t* tmp_cells = NULL;    /* scratch space */
-    int*     obstacles = NULL;    /* grid indicating which cells are blocked */
+    char*    obstacles = NULL;    /* grid indicating which cells are blocked */
     float*  av_vels   = NULL;    /* a record of the av. velocity computed for each timestep */
 
     int    ii;                    /*  generic counter */
@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
 }
 
 void write_values(const char * final_state_file, const char * av_vels_file,
-    const param_t params, speed_t* cells, int* obstacles, float* av_vels)
+    const param_t params, speed_t* cells, char* obstacles, float* av_vels)
 {
     FILE* fp;                     /* file pointer */
     int ii,jj,kk;                 /* generic counters */
@@ -213,7 +213,7 @@ void write_values(const char * final_state_file, const char * av_vels_file,
     fclose(fp);
 }
 
-float calc_reynolds(const param_t params, speed_t* cells, int* obstacles)
+float calc_reynolds(const param_t params, speed_t* cells, char* obstacles)
 {
     const float viscosity = 1.0 / 6.0 * (2.0 / params.omega - 1.0);
 

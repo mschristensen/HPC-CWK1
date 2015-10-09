@@ -6,7 +6,7 @@
 #include "lbm.h"
 
 void timestep(const param_t params, const accel_area_t accel_area,
-    speed_t* cells, speed_t* tmp_cells, int* obstacles)
+    speed_t* cells, speed_t* tmp_cells, char* obstacles)
 {
     accelerate_flow(params,accel_area,cells,obstacles);
     propagate(params,cells,tmp_cells);
@@ -15,7 +15,7 @@ void timestep(const param_t params, const accel_area_t accel_area,
 }
 
 void accelerate_flow(const param_t params, const accel_area_t accel_area,
-    speed_t* cells, int* obstacles)
+    speed_t* cells, char* obstacles)
 {
     int ii,jj;     /* generic counters */
     float w1,w2;  /* weighting factors */
@@ -107,7 +107,7 @@ void propagate(const param_t params, speed_t* cells, speed_t* tmp_cells)
     }
 }
 
-void rebound(const param_t params, speed_t* cells, speed_t* tmp_cells, int* obstacles)
+void rebound(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles)
 {
     int ii,jj;  /* generic counters */
 
@@ -134,7 +134,7 @@ void rebound(const param_t params, speed_t* cells, speed_t* tmp_cells, int* obst
     }
 }
 
-void collision(const param_t params, speed_t* cells, speed_t* tmp_cells, int* obstacles)
+void collision(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles)
 {
     int ii,jj,kk;                 /* generic counters */
     const float c_sq = 1.0/3.0;  /* square of speed of sound */
@@ -240,7 +240,7 @@ void collision(const param_t params, speed_t* cells, speed_t* tmp_cells, int* ob
     }
 }
 
-float av_velocity(const param_t params, speed_t* cells, int* obstacles)
+float av_velocity(const param_t params, speed_t* cells, char* obstacles)
 {
     int    ii,jj,kk;       /* generic counters */
     int    tot_cells = 0;  /* no. of cells used in calculation */
