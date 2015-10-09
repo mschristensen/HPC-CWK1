@@ -1,12 +1,34 @@
 ## Optimisation statistics
 
-# Initial timings
+********************************************************
+*   All timing statistics are taken from Blue Crystal
+*   (Make sure not to just run on the login node!)
+*   All entries are of the form:
+*
+*   # <Title>
+*   # <Files affected>
+*   # <Commit hash>
+*   <executed command> <-- this details the inputs used
+*   <statistics>
+*
+********************************************************
+
+# Initial commit
+# 16452d5517e659914c4f6814ef0ac40659a69ddb
 ./lbm -a ./av_vels.dat -f ./final_state.dat -p ../inputs/box.params
 ==done==
 Reynolds number:                2.039107350801E+01
-Elapsed time:                   105.091659 (s)
-Elapsed user CPU time:          104.841061 (s)
-Elapsed system CPU time:        0.002999 (s)
+Elapsed time:                   103.551228 (s)
+Elapsed user CPU time:          103.308294 (s)
+Elapsed system CPU time:        0.000999 (s)
 
-# Replace doubles with floats in lbm.h, lbm.c, simulation.c and utils.c
+# Replace instances of double with float
+# lbm.h/c, simulation.c, utils.c
+# 6731360bdf40cf3f0abc8cf82c12ad881950cf29
+./lbm -a ./av_vels.dat -f ./final_state.dat -p ../inputs/box.params
+==done==
+Reynolds number:                2.037891006470E+01
+Elapsed time:                   79.287347 (s)
+Elapsed user CPU time:          79.090976 (s)
+Elapsed system CPU time:        0.003999 (s)
 
