@@ -1,3 +1,7 @@
+# MY NOTES
+
+This private repository is labelled `mygithub`. Only push to this repo, using `git push mygithub master`... do NOT use `origin`.
+
 # HPC Coursework
 
 Base coursework for HPC 2015 class

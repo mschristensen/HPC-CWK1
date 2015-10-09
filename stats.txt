@@ -10,4 +10,3 @@ Elapsed system CPU time:        0.002999 (s)
 
 # Replace doubles with floats in lbm.h, lbm.c, simulation.c and utils.c
 
-

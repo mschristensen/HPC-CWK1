@@ -55,6 +55,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <omp.h>
 
 #include "lbm.h"
 
@@ -64,6 +65,9 @@
 */
 int main(int argc, char* argv[])
 {
+    //OpenMP Setup
+    omp_set_num_threads(16);
+
     char * final_state_file = NULL;
     char * av_vels_file = NULL;
     char * param_file = NULL;
@@ -74,7 +78,7 @@ int main(int argc, char* argv[])
     speed_t* cells     = NULL;    /* grid containing fluid densities */
     speed_t* tmp_cells = NULL;    /* scratch space */
     int*     obstacles = NULL;    /* grid indicating which cells are blocked */
-    double*  av_vels   = NULL;    /* a record of the av. velocity computed for each timestep */
+    float*  av_vels   = NULL;    /* a record of the av. velocity computed for each timestep */
 
     int    ii;                    /*  generic counter */
     struct timeval timstr;        /* structure to hold elapsed time */
@@ -124,16 +128,16 @@ int main(int argc, char* argv[])
 }
 
 void write_values(const char * final_state_file, const char * av_vels_file,
-    const param_t params, speed_t* cells, int* obstacles, double* av_vels)
+    const param_t params, speed_t* cells, int* obstacles, float* av_vels)
 {
     FILE* fp;                     /* file pointer */
     int ii,jj,kk;                 /* generic counters */
-    const double c_sq = 1.0/3.0;  /* sq. of speed of sound */
-    double local_density;         /* per grid cell sum of densities */
-    double pressure;              /* fluid pressure in grid cell */
-    double u_x;                   /* x-component of velocity in grid cell */
-    double u_y;                   /* y-component of velocity in grid cell */
-    double u;                     /* norm--root of summed squares--of u_x and u_y */
+    const float c_sq = 1.0/3.0;  /* sq. of speed of sound */
+    float local_density;         /* per grid cell sum of densities */
+    float pressure;              /* fluid pressure in grid cell */
+    float u_x;                   /* x-component of velocity in grid cell */
+    float u_y;                   /* y-component of velocity in grid cell */
+    float u;                     /* norm--root of summed squares--of u_x and u_y */
 
     fp = fopen(final_state_file, "w");
 
@@ -209,17 +213,17 @@ void write_values(const char * final_state_file, const char * av_vels_file,
     fclose(fp);
 }
 
-double calc_reynolds(const param_t params, speed_t* cells, int* obstacles)
+float calc_reynolds(const param_t params, speed_t* cells, int* obstacles)
 {
-    const double viscosity = 1.0 / 6.0 * (2.0 / params.omega - 1.0);
+    const float viscosity = 1.0 / 6.0 * (2.0 / params.omega - 1.0);
 
     return av_velocity(params,cells,obstacles) * params.reynolds_dim / viscosity;
 }
 
-double total_density(const param_t params, speed_t* cells)
+float total_density(const param_t params, speed_t* cells)
 {
     int ii,jj,kk;        /* generic counters */
-    double total = 0.0;  /* accumulator */
+    float total = 0.0;  /* accumulator */
 
     for (ii = 0; ii < params.ny; ii++)
     {
@@ -234,4 +238,3 @@ double total_density(const param_t params, speed_t* cells)
 
     return total;
 }
-
