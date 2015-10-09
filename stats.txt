@@ -32,3 +32,13 @@ Elapsed time:                   79.287347 (s)
 Elapsed user CPU time:          79.090976 (s)
 Elapsed system CPU time:        0.003999 (s)
 
+# Convert obstacles into char array (not integers)
+# lbm.h/c, simulation.c, utils.c
+# b754db00b985b872fb549026d29cae3e26cd9aca
+./lbm -a ./av_vels.dat -f ./final_state.dat -p ../inputs/box.params
+==done==
+Reynolds number:                2.037891006470E+01
+Elapsed time:                   79.388162 (s)
+Elapsed user CPU time:          79.202959 (s)
+Elapsed system CPU time:        0.000999 (s)
+
