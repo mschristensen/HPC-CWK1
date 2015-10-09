@@ -1,6 +1,6 @@
 CC=gcc
 
-CFLAGS=-O3 -g -Wall -fopenmp
+CFLAGS=-Ofast -g -Wall -fopenmp
 
 EXE=lbm
 
@@ -57,4 +57,3 @@ submission:
 .PHONY: clean submission
 clean:
 	rm -f *.o $(EXE)
-
