@@ -9,9 +9,9 @@ void timestep(const param_t params, const accel_area_t accel_area,
     speed_t* cells, speed_t* tmp_cells, int* obstacles)
 {
     accelerate_flow(params,accel_area,cells,obstacles);
-    propagate(params,cells,tmp_cells);
-    rebound(params,cells,tmp_cells,obstacles);
-    collision(params,cells,tmp_cells,obstacles);
+    //propagate(params,cells,tmp_cells);
+    //rebound(params,cells,tmp_cells,obstacles);
+    //collision(params,cells,tmp_cells,obstacles);
 }
 
 void accelerate_flow(const param_t params, const accel_area_t accel_area,
@@ -52,7 +52,9 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
     {
         ii = accel_area.idx;
 
-#pragma omp for
+#pragma omp parallel for shared(cells,obstacles) schedule(static,8)
+//http://stackoverflow.com/questions/19278435/avoiding-false-sharing-in-openmp-with-arrays
+//No apparent speed-up??
         for (jj = 0; jj < params.nx; jj++)
         {
             /* if the cell is not occupied and
@@ -232,8 +234,8 @@ void collision(const param_t params, speed_t* cells, speed_t* tmp_cells, int* ob
                 /* relaxation step */
                 for (kk = 0; kk < NSPEEDS; kk++)
                 {
-                    cells[ii*params.nx + jj].speeds[kk] = 
-                        (tmp_cells[ii*params.nx + jj].speeds[kk] + params.omega * 
+                    cells[ii*params.nx + jj].speeds[kk] =
+                        (tmp_cells[ii*params.nx + jj].speeds[kk] + params.omega *
                         (d_equ[kk] - tmp_cells[ii*params.nx + jj].speeds[kk]));
                 }
             }
@@ -298,4 +300,3 @@ double av_velocity(const param_t params, speed_t* cells, int* obstacles)
 
     return tot_u / (double)tot_cells;
 }
-
