@@ -1,0 +1,13 @@
+## Optimisation statistics
+
+# Initial timings
+./lbm -a ./av_vels.dat -f ./final_state.dat -p ../inputs/box.params
+==done==
+Reynolds number:                2.039107350801E+01
+Elapsed time:                   105.091659 (s)
+Elapsed user CPU time:          104.841061 (s)
+Elapsed system CPU time:        0.002999 (s)
+
+# Replace doubles with floats in lbm.h, lbm.c, simulation.c and utils.c
+
+
