@@ -17,8 +17,10 @@ void timestep(const param_t params, const accel_area_t accel_area,
 void accelerate_flow(const param_t params, const accel_area_t accel_area,
     speed_t* cells, char* obstacles)
 {
-    int ii,jj;     /* generic counters */
+    int ii,jj;    /* generic counters */
     float w1,w2;  /* weighting factors */
+    int index;    /* array index for obstacles and speeds */
+    float* speeds;/* pointer to cells[index].speeds array */
 
     /* compute weighting factors */
     w1 = params.density * params.accel / 9.0;
@@ -30,8 +32,8 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
 
         for (ii = 0; ii < params.ny; ii++)
         {
-            int index = ii*params.nx + jj;
-            float* speeds = cells[index].speeds;
+            index = ii*params.nx + jj;
+            speeds = cells[index].speeds;
             /* if the cell is not occupied and
             ** we don't send a density negative */
             if (!obstacles[index] &&
@@ -56,8 +58,8 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
 
         for (jj = 0; jj < params.nx; jj++)
         {
-            int index = ii*params.nx + jj;
-            float* speeds = cells[index].speeds;
+            index = ii*params.nx + jj;
+            speeds = cells[index].speeds;
 
             /* if the cell is not occupied and
             ** we don't send a density negative */
@@ -82,32 +84,38 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
 void propagate(const param_t params, speed_t* cells, speed_t* tmp_cells)
 {
     int ii,jj;            /* generic counters */
+    int x_e,x_w,y_n,y_s;  /* indices of neighbouring cells */
+    int index;
+    float* speeds;
 
     /* loop over _all_ cells */
     for (ii = 0; ii < params.ny; ii++)
     {
         for (jj = 0; jj < params.nx; jj++)
         {
-            int x_e,x_w,y_n,y_s;  /* indices of neighbouring cells */
             /* determine indices of axis-direction neighbours
             ** respecting periodic boundary conditions (wrap around) */
             y_n = (ii + 1) % params.ny;
             x_e = (jj + 1) % params.nx;
             y_s = (ii == 0) ? (ii + params.ny - 1) : (ii - 1);
             x_w = (jj == 0) ? (jj + params.nx - 1) : (jj - 1);
+
+            index = ii*params.nx + jj;
+            speeds = cells[index].speeds;
+
             /* propagate densities to neighbouring cells, following
             ** appropriate directions of travel and writing into
             ** scratch space grid */
-            tmp_cells[ii *params.nx + jj].speeds[0]  = cells[ii*params.nx + jj].speeds[0]; /* central cell, */
+            tmp_cells[ii *params.nx + jj].speeds[0]  = speeds[0]; /* central cell, */
                                                      /* no movement   */
-            tmp_cells[ii *params.nx + x_e].speeds[1] = cells[ii*params.nx + jj].speeds[1]; /* east */
-            tmp_cells[y_n*params.nx + jj].speeds[2]  = cells[ii*params.nx + jj].speeds[2]; /* north */
-            tmp_cells[ii *params.nx + x_w].speeds[3] = cells[ii*params.nx + jj].speeds[3]; /* west */
-            tmp_cells[y_s*params.nx + jj].speeds[4]  = cells[ii*params.nx + jj].speeds[4]; /* south */
-            tmp_cells[y_n*params.nx + x_e].speeds[5] = cells[ii*params.nx + jj].speeds[5]; /* north-east */
-            tmp_cells[y_n*params.nx + x_w].speeds[6] = cells[ii*params.nx + jj].speeds[6]; /* north-west */
-            tmp_cells[y_s*params.nx + x_w].speeds[7] = cells[ii*params.nx + jj].speeds[7]; /* south-west */
-            tmp_cells[y_s*params.nx + x_e].speeds[8] = cells[ii*params.nx + jj].speeds[8]; /* south-east */
+            tmp_cells[ii *params.nx + x_e].speeds[1] = speeds[1]; /* east */
+            tmp_cells[y_n*params.nx + jj].speeds[2]  = speeds[2]; /* north */
+            tmp_cells[ii *params.nx + x_w].speeds[3] = speeds[3]; /* west */
+            tmp_cells[y_s*params.nx + jj].speeds[4]  = speeds[4]; /* south */
+            tmp_cells[y_n*params.nx + x_e].speeds[5] = speeds[5]; /* north-east */
+            tmp_cells[y_n*params.nx + x_w].speeds[6] = speeds[6]; /* north-west */
+            tmp_cells[y_s*params.nx + x_w].speeds[7] = speeds[7]; /* south-west */
+            tmp_cells[y_s*params.nx + x_e].speeds[8] = speeds[8]; /* south-east */
         }
     }
 }
