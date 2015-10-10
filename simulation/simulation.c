@@ -10,8 +10,7 @@ void timestep(const param_t params, const accel_area_t accel_area,
 {
     accelerate_flow(params,accel_area,cells,obstacles);
     propagate(params,cells,tmp_cells);
-    rebound(params,cells,tmp_cells,obstacles);
-    collision(params,cells,tmp_cells,obstacles);
+    rebound_collision(params,cells,tmp_cells,obstacles);
 }
 
 void accelerate_flow(const param_t params, const accel_area_t accel_area,
@@ -120,9 +119,20 @@ void propagate(const param_t params, speed_t* cells, speed_t* tmp_cells)
     }
 }
 
-void rebound(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles)
+void rebound_collision(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles)
 {
-    int ii,jj;  /* generic counters */
+    int ii,jj,kk;  /* generic counters */
+    const float c_sq = 1.0/3.0;  /* square of speed of sound */
+    const float w0 = 4.0/9.0;    /* weighting factor */
+    const float w1 = 1.0/9.0;    /* weighting factor */
+    const float w2 = 1.0/36.0;   /* weighting factor */
+
+    float u_x,u_y;               /* av. velocities in x and y directions */
+    float u_sq;                  /* squared velocity */
+    float local_density;         /* sum of densities in a particular cell */
+    float u[NSPEEDS];            /* directional velocities */
+    float d_equ[NSPEEDS];        /* equilibrium densities */
+
     int index;
     float* speeds;
     float* tmp_speeds;
@@ -149,44 +159,7 @@ void rebound(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obs
                 speeds[6] = tmp_speeds[8];
                 speeds[7] = tmp_speeds[5];
                 speeds[8] = tmp_speeds[6];
-            }
-        }
-    }
-}
-
-void collision(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles)
-{
-    int ii,jj,kk;                 /* generic counters */
-    const float c_sq = 1.0/3.0;  /* square of speed of sound */
-    const float w0 = 4.0/9.0;    /* weighting factor */
-    const float w1 = 1.0/9.0;    /* weighting factor */
-    const float w2 = 1.0/36.0;   /* weighting factor */
-
-    float u_x,u_y;               /* av. velocities in x and y directions */
-    float u_sq;                  /* squared velocity */
-    float local_density;         /* sum of densities in a particular cell */
-    float u[NSPEEDS];            /* directional velocities */
-    float d_equ[NSPEEDS];        /* equilibrium densities */
-
-    int index;
-    float* speeds;
-    float* tmp_speeds;
-
-    /* loop over the cells in the grid
-    ** NB the collision step is called after
-    ** the propagate step and so values of interest
-    ** are in the scratch-space grid */
-    for (ii = 0; ii < params.ny; ii++)
-    {
-        for (jj = 0; jj < params.nx; jj++)
-        {
-            index = ii*params.nx + jj;
-            speeds = cells[index].speeds;
-            tmp_speeds = tmp_cells[index].speeds;
-
-            /* don't consider occupied cells */
-            if (!obstacles[index])
-            {
+            } else {
                 /* compute local density total */
                 local_density = 0.0;
 
