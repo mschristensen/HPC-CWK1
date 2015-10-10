@@ -30,21 +30,23 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
 
         for (ii = 0; ii < params.ny; ii++)
         {
+            int index = ii*params.nx + jj;
+            float* speeds = cells[index].speeds;
             /* if the cell is not occupied and
             ** we don't send a density negative */
-            if (!obstacles[ii*params.nx + jj] &&
-            (cells[ii*params.nx + jj].speeds[4] - w1) > 0.0 &&
-            (cells[ii*params.nx + jj].speeds[7] - w2) > 0.0 &&
-            (cells[ii*params.nx + jj].speeds[8] - w2) > 0.0 )
+            if (!obstacles[index] &&
+            (speeds[4] - w1) > 0.0 &&
+            (speeds[7] - w2) > 0.0 &&
+            (speeds[8] - w2) > 0.0 )
             {
                 /* increase 'north-side' densities */
-                cells[ii*params.nx + jj].speeds[2] += w1;
-                cells[ii*params.nx + jj].speeds[5] += w2;
-                cells[ii*params.nx + jj].speeds[6] += w2;
+                speeds[2] += w1;
+                speeds[5] += w2;
+                speeds[6] += w2;
                 /* decrease 'south-side' densities */
-                cells[ii*params.nx + jj].speeds[4] -= w1;
-                cells[ii*params.nx + jj].speeds[7] -= w2;
-                cells[ii*params.nx + jj].speeds[8] -= w2;
+                speeds[4] -= w1;
+                speeds[7] -= w2;
+                speeds[8] -= w2;
             }
         }
     }
@@ -54,21 +56,24 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
 
         for (jj = 0; jj < params.nx; jj++)
         {
+            int index = ii*params.nx + jj;
+            float* speeds = cells[index].speeds;
+
             /* if the cell is not occupied and
             ** we don't send a density negative */
-            if (!obstacles[ii*params.nx + jj] &&
-            (cells[ii*params.nx + jj].speeds[3] - w1) > 0.0 &&
-            (cells[ii*params.nx + jj].speeds[6] - w2) > 0.0 &&
-            (cells[ii*params.nx + jj].speeds[7] - w2) > 0.0 )
+            if (!obstacles[index] &&
+            (speeds[3] - w1) > 0.0 &&
+            (speeds[6] - w2) > 0.0 &&
+            (speeds[7] - w2) > 0.0 )
             {
                 /* increase 'east-side' densities */
-                cells[ii*params.nx + jj].speeds[1] += w1;
-                cells[ii*params.nx + jj].speeds[5] += w2;
-                cells[ii*params.nx + jj].speeds[8] += w2;
+                speeds[1] += w1;
+                speeds[5] += w2;
+                speeds[8] += w2;
                 /* decrease 'west-side' densities */
-                cells[ii*params.nx + jj].speeds[3] -= w1;
-                cells[ii*params.nx + jj].speeds[6] -= w2;
-                cells[ii*params.nx + jj].speeds[7] -= w2;
+                speeds[3] -= w1;
+                speeds[6] -= w2;
+                speeds[7] -= w2;
             }
         }
     }
