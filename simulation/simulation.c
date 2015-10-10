@@ -123,25 +123,32 @@ void propagate(const param_t params, speed_t* cells, speed_t* tmp_cells)
 void rebound(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles)
 {
     int ii,jj;  /* generic counters */
+    int index;
+    float* speeds;
+    float* tmp_speeds;
 
     /* loop over the cells in the grid */
     for (ii = 0; ii < params.ny; ii++)
     {
         for (jj = 0; jj < params.nx; jj++)
         {
+            index = ii*params.nx + jj;
+            speeds = cells[index].speeds;
+            tmp_speeds = tmp_cells[index].speeds;
+
             /* if the cell contains an obstacle */
-            if (obstacles[ii*params.nx + jj])
+            if (obstacles[index])
             {
                 /* called after propagate, so taking values from scratch space
                 ** mirroring, and writing into main grid */
-                cells[ii*params.nx + jj].speeds[1] = tmp_cells[ii*params.nx + jj].speeds[3];
-                cells[ii*params.nx + jj].speeds[2] = tmp_cells[ii*params.nx + jj].speeds[4];
-                cells[ii*params.nx + jj].speeds[3] = tmp_cells[ii*params.nx + jj].speeds[1];
-                cells[ii*params.nx + jj].speeds[4] = tmp_cells[ii*params.nx + jj].speeds[2];
-                cells[ii*params.nx + jj].speeds[5] = tmp_cells[ii*params.nx + jj].speeds[7];
-                cells[ii*params.nx + jj].speeds[6] = tmp_cells[ii*params.nx + jj].speeds[8];
-                cells[ii*params.nx + jj].speeds[7] = tmp_cells[ii*params.nx + jj].speeds[5];
-                cells[ii*params.nx + jj].speeds[8] = tmp_cells[ii*params.nx + jj].speeds[6];
+                speeds[1] = tmp_speeds[3];
+                speeds[2] = tmp_speeds[4];
+                speeds[3] = tmp_speeds[1];
+                speeds[4] = tmp_speeds[2];
+                speeds[5] = tmp_speeds[7];
+                speeds[6] = tmp_speeds[8];
+                speeds[7] = tmp_speeds[5];
+                speeds[8] = tmp_speeds[6];
             }
         }
     }
