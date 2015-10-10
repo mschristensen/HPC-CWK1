@@ -56,8 +56,7 @@ void timestep(const param_t params, const accel_area_t accel_area,
 void accelerate_flow(const param_t params, const accel_area_t accel_area,
     speed_t* cells, char* obstacles);
 void propagate(const param_t params, speed_t* cells, speed_t* tmp_cells);
-void rebound(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles);
-void collision(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles);
+void rebound_collision(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles);
 
 /* Sum all the densities in the grid.
 ** The total should remain constant from one timestep to the next. */
