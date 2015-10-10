@@ -95,3 +95,15 @@ Elapsed time:                   42.006458 (s)
 Elapsed user CPU time:          41.906629 (s)
 Elapsed system CPU time:        0.000999 (s)
 
+# Use temp variable for cells.speeds array pointer and index in av_vels
+# simulation.c
+# ab6e74027d4bc8719716fabfc63f708454a21e1c
+./lbm -a ./av_vels.dat -f ./final_state.dat -p ../inputs/box.params
+==done==
+Reynolds number:                2.038111495972E+01
+Elapsed time:                   42.003104 (s)
+Elapsed user CPU time:          41.902629 (s)
+Elapsed system CPU time:        0.000000 (s)
+
+
+
