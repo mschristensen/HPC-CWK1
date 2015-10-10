@@ -168,6 +168,10 @@ void collision(const param_t params, speed_t* cells, speed_t* tmp_cells, char* o
     float u[NSPEEDS];            /* directional velocities */
     float d_equ[NSPEEDS];        /* equilibrium densities */
 
+    int index;
+    float* speeds;
+    float* tmp_speeds;
+
     /* loop over the cells in the grid
     ** NB the collision step is called after
     ** the propagate step and so values of interest
@@ -176,33 +180,37 @@ void collision(const param_t params, speed_t* cells, speed_t* tmp_cells, char* o
     {
         for (jj = 0; jj < params.nx; jj++)
         {
+            index = ii*params.nx + jj;
+            speeds = cells[index].speeds;
+            tmp_speeds = tmp_cells[index].speeds;
+
             /* don't consider occupied cells */
-            if (!obstacles[ii*params.nx + jj])
+            if (!obstacles[index])
             {
                 /* compute local density total */
                 local_density = 0.0;
 
                 for (kk = 0; kk < NSPEEDS; kk++)
                 {
-                    local_density += tmp_cells[ii*params.nx + jj].speeds[kk];
+                    local_density += tmp_speeds[kk];
                 }
 
                 /* compute x velocity component */
-                u_x = (tmp_cells[ii*params.nx + jj].speeds[1] +
-                        tmp_cells[ii*params.nx + jj].speeds[5] +
-                        tmp_cells[ii*params.nx + jj].speeds[8]
-                    - (tmp_cells[ii*params.nx + jj].speeds[3] +
-                        tmp_cells[ii*params.nx + jj].speeds[6] +
-                        tmp_cells[ii*params.nx + jj].speeds[7]))
+                u_x = (tmp_speeds[1] +
+                        tmp_speeds[5] +
+                        tmp_speeds[8]
+                    - (tmp_speeds[3] +
+                        tmp_speeds[6] +
+                        tmp_speeds[7]))
                     / local_density;
 
                 /* compute y velocity component */
-                u_y = (tmp_cells[ii*params.nx + jj].speeds[2] +
-                        tmp_cells[ii*params.nx + jj].speeds[5] +
-                        tmp_cells[ii*params.nx + jj].speeds[6]
-                    - (tmp_cells[ii*params.nx + jj].speeds[4] +
-                        tmp_cells[ii*params.nx + jj].speeds[7] +
-                        tmp_cells[ii*params.nx + jj].speeds[8]))
+                u_y = (tmp_speeds[2] +
+                        tmp_speeds[5] +
+                        tmp_speeds[6]
+                    - (tmp_speeds[4] +
+                        tmp_speeds[7] +
+                        tmp_speeds[8]))
                     / local_density;
 
                 /* velocity squared */
@@ -251,9 +259,9 @@ void collision(const param_t params, speed_t* cells, speed_t* tmp_cells, char* o
                 /* relaxation step */
                 for (kk = 0; kk < NSPEEDS; kk++)
                 {
-                    cells[ii*params.nx + jj].speeds[kk] =
-                        (tmp_cells[ii*params.nx + jj].speeds[kk] + params.omega *
-                        (d_equ[kk] - tmp_cells[ii*params.nx + jj].speeds[kk]));
+                    speeds[kk] =
+                        (tmp_speeds[kk] + params.omega *
+                        (d_equ[kk] - tmp_speeds[kk]));
                 }
             }
         }
