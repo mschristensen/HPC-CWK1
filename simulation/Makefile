@@ -1,6 +1,7 @@
-CC=gcc
+CC=icc
 
-CFLAGS=-g -Wall -fopenmp -Ofast
+#CFLAGS=-g -Wall -fopenmp -Ofast
+CFLAGS=-O3 -no-prec-div -ansi-alias -openmp
 
 EXE=lbm
 

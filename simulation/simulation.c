@@ -5,6 +5,15 @@
 #include <omp.h>
 #include "lbm.h"
 
+//TODO::
+//  -Compare parallel speed without collapse(2)
+//  -Remove all temp vars for cells.speeds etc
+//  -Parallelise other functions
+//  -Parallelise utils.c
+//  -Reduce cache-thrashing where possible
+//  -Experiment with scheduling
+//  -Experiment with task-level parallelism for triple nested loops
+
 void timestep(const param_t params, const accel_area_t accel_area,
     speed_t* cells, speed_t* tmp_cells, char* obstacles)
 {
@@ -21,7 +30,6 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
     float w1 = params.density * params.accel / 9.0;
     float w2 = params.density * params.accel / 36.0;
     int index;    /* array index for obstacles and speeds */
-    float* speeds;/* pointer to cells[index].speeds array */
 
     if (accel_area.col_or_row == ACCEL_COLUMN)
     {
@@ -29,22 +37,21 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
         for (ii = 0; ii < params.ny; ii++)
         {
             index = ii*params.nx + jj;
-            speeds = cells[index].speeds;
             /* if the cell is not occupied and
             ** we don't send a density negative */
             if (!obstacles[index] &&
-            (speeds[4] - w1) > 0.0 &&
-            (speeds[7] - w2) > 0.0 &&
-            (speeds[8] - w2) > 0.0 )
+            (cells[index].speeds[4] - w1) > 0.0 &&
+            (cells[index].speeds[7] - w2) > 0.0 &&
+            (cells[index].speeds[8] - w2) > 0.0 )
             {
                 /* increase 'north-side' densities */
-                speeds[2] += w1;
-                speeds[5] += w2;
-                speeds[6] += w2;
+                cells[index].speeds[2] += w1;
+                cells[index].speeds[5] += w2;
+                cells[index].speeds[6] += w2;
                 /* decrease 'south-side' densities */
-                speeds[4] -= w1;
-                speeds[7] -= w2;
-                speeds[8] -= w2;
+                cells[index].speeds[4] -= w1;
+                cells[index].speeds[7] -= w2;
+                cells[index].speeds[8] -= w2;
             }
         }
     }
@@ -54,23 +61,21 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
         for (jj = 0; jj < params.nx; jj++)
         {
             index = ii*params.nx + jj;
-            speeds = cells[index].speeds;
-
             /* if the cell is not occupied and
             ** we don't send a density negative */
             if (!obstacles[index] &&
-            (speeds[3] - w1) > 0.0 &&
-            (speeds[6] - w2) > 0.0 &&
-            (speeds[7] - w2) > 0.0 )
+            (cells[index].speeds[3] - w1) > 0.0 &&
+            (cells[index].speeds[6] - w2) > 0.0 &&
+            (cells[index].speeds[7] - w2) > 0.0 )
             {
                 /* increase 'east-side' densities */
-                speeds[1] += w1;
-                speeds[5] += w2;
-                speeds[8] += w2;
+                cells[index].speeds[1] += w1;
+                cells[index].speeds[5] += w2;
+                cells[index].speeds[8] += w2;
                 /* decrease 'west-side' densities */
-                speeds[3] -= w1;
-                speeds[6] -= w2;
-                speeds[7] -= w2;
+                cells[index].speeds[3] -= w1;
+                cells[index].speeds[6] -= w2;
+                cells[index].speeds[7] -= w2;
             }
         }
     }
