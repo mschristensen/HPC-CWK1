@@ -51,22 +51,19 @@ void write_values(const char * final_state_file, const char * av_vels_file,
 void finalise(speed_t** cells_ptr, speed_t** tmp_cells_ptr,
     char** obstacles_ptr, float** av_vels_ptr);
 
-void timestep(const param_t params, const accel_area_t accel_area,
+float timestep(const param_t params, const accel_area_t accel_area,
     speed_t* cells, speed_t* tmp_cells, char* obstacles);
 void accelerate_flow(const param_t params, const accel_area_t accel_area,
     speed_t* cells, char* obstacles);
 void propagate(const param_t params, speed_t* cells, speed_t* tmp_cells);
-void rebound_collision(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles);
+float rebound_collision_av_velocity(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles);
 
 /* Sum all the densities in the grid.
 ** The total should remain constant from one timestep to the next. */
 float total_density(const param_t params, speed_t* cells);
 
-/* compute average velocity */
-float av_velocity(const param_t params, speed_t* cells, char* obstacles);
-
 /* calculate Reynolds number */
-float calc_reynolds(const param_t params, speed_t* cells, char* obstacles);
+float calc_reynolds(const param_t params, const float last_av_vel);
 
 /* Exit, printing out formatted string */
 #define DIE(...) exit_with_error(__LINE__, __FILE__, __VA_ARGS__)

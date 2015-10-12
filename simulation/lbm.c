@@ -97,8 +97,8 @@ int main(int argc, char* argv[])
 
     for (ii = 0; ii < params.max_iters; ii++)
     {
-        timestep(params, accel_area, cells, tmp_cells, obstacles);
-        av_vels[ii] = av_velocity(params, cells, obstacles);
+        av_vels[ii] = timestep(params, accel_area, cells, tmp_cells, obstacles);
+        //av_vels[ii] = av_velocity(params, cells, obstacles);
 
         #ifdef DEBUG
         printf("==timestep: %d==\n", ii);
@@ -106,6 +106,7 @@ int main(int argc, char* argv[])
         printf("tot density: %.12E\n", total_density(params, cells));
         #endif
     }
+    const float last_av_vel = av_vels[params.max_iters - 1];
 
     gettimeofday(&timstr,NULL);
     toc=timstr.tv_sec+(timstr.tv_usec/1000000.0);
@@ -116,7 +117,7 @@ int main(int argc, char* argv[])
     systim=timstr.tv_sec+(timstr.tv_usec/1000000.0);
 
     printf("==done==\n");
-    printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params,cells,obstacles));
+    printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params,last_av_vel));
     printf("Elapsed time:\t\t\t%.6f (s)\n", toc-tic);
     printf("Elapsed user CPU time:\t\t%.6f (s)\n", usrtim);
     printf("Elapsed system CPU time:\t%.6f (s)\n", systim);
@@ -213,11 +214,11 @@ void write_values(const char * final_state_file, const char * av_vels_file,
     fclose(fp);
 }
 
-float calc_reynolds(const param_t params, speed_t* cells, char* obstacles)
+float calc_reynolds(const param_t params, const float last_av_vel)
 {
     const float viscosity = 1.0 / 6.0 * (2.0 / params.omega - 1.0);
 
-    return av_velocity(params,cells,obstacles) * params.reynolds_dim / viscosity;
+    return last_av_vel * params.reynolds_dim / viscosity;
 }
 
 float total_density(const param_t params, speed_t* cells)
