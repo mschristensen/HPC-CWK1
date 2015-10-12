@@ -125,3 +125,15 @@ Elapsed time:                   31.270950 (s)
 Elapsed user CPU time:          498.841164 (s)
 Elapsed system CPU time:        0.045993 (s)
 
+# Removed temp variables for cells.speeds, tmp_cells.speeds array pointers!
+# This caused a 2x speedup... but had marginally sped up the serial code...
+# find out why!
+# simulation.c
+# d1fc9149c17a667d33938d7e4a4c062790aeebef
+./lbm -a ./av_vels.dat -f ./final_state.dat -p ../inputs/box.params
+==done==
+Reynolds number:                2.038112068176E+01
+Elapsed time:                   14.320058 (s)
+Elapsed user CPU time:          228.502262 (s)
+Elapsed system CPU time:        0.030995 (s)
+
