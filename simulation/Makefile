@@ -6,7 +6,7 @@ CFLAGS=-O3 -no-prec-div -ansi-alias -fast -openmp
 
 EXE=lbm
 
-PARAM_FILE=../inputs/box.params
+PARAM_FILE=../inputs/large_pipe.params
 
 FINAL_STATE_FILE=./final_state.dat
 AV_VELS_FILE=./av_vels.dat

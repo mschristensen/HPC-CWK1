@@ -98,7 +98,6 @@ int main(int argc, char* argv[])
     for (ii = 0; ii < params.max_iters; ii++)
     {
         av_vels[ii] = timestep(params, accel_area, cells, tmp_cells, obstacles);
-        //av_vels[ii] = av_velocity(params, cells, obstacles);
 
         #ifdef DEBUG
         printf("==timestep: %d==\n", ii);
