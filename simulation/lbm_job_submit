@@ -13,7 +13,7 @@
 application="make run"
 
 #! Run options for the application
-options="PARAM_FILE=../inputs/box.params"
+options="PARAM_FILE=../inputs/large_pipe.params"
 
 ###############################################################
 ### You should not have to change anything below this line ####
