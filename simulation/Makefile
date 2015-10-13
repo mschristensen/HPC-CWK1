@@ -1,3 +1,4 @@
+#CC=tau_cc.sh
 CC=icc
 
 #CFLAGS=-g -Wall -fopenmp -Ofast

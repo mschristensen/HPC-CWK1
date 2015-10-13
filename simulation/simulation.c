@@ -7,8 +7,9 @@
 
 //TODO::
 //  -Compare parallel speed without collapse(2)
-//  -Remove all temp vars for cells.speeds etc
-//  -Parallelise other functions
+//  -Try -pthread flag
+//  -add if-condition (an omp directive) to parallelise only for large inputs? e.g. for accelerate_flow
+//  -spawn threads only once and add barriers? may need a single monolithic function, or pass the vars in as args (in a struct?)
 //  -Parallelise utils.c
 //  -Reduce cache-thrashing where possible
 //  -Experiment with scheduling
@@ -91,7 +92,7 @@ void propagate(const param_t params, speed_t* cells, speed_t* tmp_cells)
 
     #pragma omp parallel default(none) shared(cells,tmp_cells) private(ii,jj,y_n,x_e,y_s,x_w,index)
     {
-        #pragma omp for collapse(2)
+        #pragma omp for collapse(2) schedule(static)
         /* loop over _all_ cells */
         for (ii = 0; ii < params.ny; ii++)
         {
@@ -140,14 +141,11 @@ float rebound_collision_av_velocity(const param_t params, speed_t* cells, speed_
 
     int index;
     int tot_cells = 0;    /* no. of cells used in calculation */
-    float tot_u;          /* accumulated magnitudes of velocity for each cell */
-
-    /* initialise */
-    tot_u = 0.0;
+    float tot_u = 0.0;          /* accumulated magnitudes of velocity for each cell */
 
     #pragma omp parallel default(none) shared(cells,tmp_cells,obstacles,tot_u,tot_cells) private(ii,jj,kk,index,u_x,u_y,u_sq,local_density,u,d_equ)
     {
-        #pragma omp for collapse(2) reduction(+:tot_u,tot_cells)
+        #pragma omp for collapse(2) reduction(+:tot_u,tot_cells) schedule(static)
         /* loop over the cells in the grid */
         for (ii = 0; ii < params.ny; ii++)
         {
@@ -240,23 +238,17 @@ float rebound_collision_av_velocity(const param_t params, speed_t* cells, speed_
                         + (u[8] * u[8]) / (2.0 * c_sq * c_sq)
                         - u_sq / (2.0 * c_sq));
 
-                    /* relaxation step */
+                    /* AV_VELS STEP*/
+                    /* local density total */
+                    local_density = 0.0;
+                    /* relaxation step (part of collision) */
                     for (kk = 0; kk < NSPEEDS; kk++)
                     {
                         cells[index].speeds[kk] =
                             (tmp_cells[index].speeds[kk] + params.omega *
                             (d_equ[kk] - tmp_cells[index].speeds[kk]));
-                    }
-
-                    /* AV_VELS STEP*/
-                    /* local density total */
-                    local_density = 0.0;
-
-                    for (kk = 0; kk < NSPEEDS; kk++)
-                    {
                         local_density += cells[index].speeds[kk];
                     }
-
                     /* x-component of velocity */
                     u_x = (cells[index].speeds[1] +
                             cells[index].speeds[5] +
