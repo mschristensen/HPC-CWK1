@@ -35,7 +35,7 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
     if (accel_area.col_or_row == ACCEL_COLUMN)
     {
         jj = accel_area.idx;
-        #pragma omp parallel for default(none) shared(cells,obstacles) private(index,w1,w2,jj)
+        #pragma omp parallel for default(none) shared(cells,obstacles) private(index,ii) firstprivate(jj,w1,w2)
         for (ii = 0; ii < params.ny; ii++)
         {
             index = ii*params.nx + jj;
@@ -60,7 +60,7 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
     else
     {
         ii = accel_area.idx;
-        #pragma omp parallel for default(none) shared(cells,obstacles) private(index,w1,w2,ii)
+        #pragma omp parallel for default(none) shared(cells,obstacles) private(index,jj) firstprivate(ii,w1,w2)
         for (jj = 0; jj < params.nx; jj++)
         {
             index = ii*params.nx + jj;
