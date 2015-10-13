@@ -172,3 +172,16 @@ Elapsed time:                   3.770079 (s)
 Elapsed user CPU time:          59.761914 (s)
 Elapsed system CPU time:        0.013997 (s)
 
+
+*** LARGE PIPE *** 
+# Added conditional guided/static scheduling for propagate
+# simulation.c, lbm.h
+# 8c345fe20307dd8870d797d0f568249bae79fbf7
+./lbm -a ./av_vels.dat -f ./final_state.dat -p ../inputs/large_pipe.params
+==done==
+Reynolds number:                1.580380285304E-06
+Elapsed time:                   31.575039 (s)
+Elapsed user CPU time:          503.499456 (s)
+Elapsed system CPU time:        0.190970 (s)
+
+
