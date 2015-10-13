@@ -93,7 +93,7 @@ void propagate(const param_t params, speed_t* cells, speed_t* tmp_cells)
 
     #pragma omp parallel default(none) shared(cells,tmp_cells) private(ii,jj,y_n,x_e,y_s,x_w,index)
     {
-        #pragma omp for collapse(2) schedule(static)
+        #pragma omp for collapse(2) schedule(guided) nowait
         /* loop over _all_ cells */
         for (ii = 0; ii < params.ny; ii++)
         {
@@ -146,7 +146,7 @@ float rebound_collision_av_velocity(const param_t params, speed_t* cells, speed_
 
     #pragma omp parallel default(none) shared(cells,tmp_cells,obstacles,tot_u,tot_cells) private(ii,jj,kk,index,u_x,u_y,u_sq,local_density,u,d_equ)
     {
-        #pragma omp for collapse(2) reduction(+:tot_u,tot_cells) schedule(static)
+        #pragma omp for collapse(2) reduction(+:tot_u,tot_cells) schedule(guided) nowait
         /* loop over the cells in the grid */
         for (ii = 0; ii < params.ny; ii++)
         {
