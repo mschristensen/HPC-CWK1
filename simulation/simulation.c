@@ -8,7 +8,9 @@
 #define LARGE_PIPE_SIZE 1000
 //TODO::
 //  -Compare parallel speed without collapse(2)
-//  -Try -pthread flag
+//  -Try scheduling to optimise cache?
+//  -Try sections to minimise thread spawning overhead?
+//  -Try prefetching?
 //  -add if-condition (an omp directive) to parallelise only for large inputs? e.g. for accelerate_flow
 //  -spawn threads only once and add barriers? may need a single monolithic function, or pass the vars in as args (in a struct?)
 //  -Parallelise utils.c
@@ -85,42 +87,64 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
     }
 }
 
+void propagate_loop(const param_t params, speed_t* cells, speed_t* tmp_cells, int ii, int jj, int y_n, int x_e, int y_s, int x_w, int index)
+{
+  /* determine indices of axis-direction neighbours
+  ** respecting periodic boundary conditions (wrap around) */
+  y_n = (ii + 1) % params.ny;
+  x_e = (jj + 1) % params.nx;
+  y_s = (ii == 0) ? (ii + params.ny - 1) : (ii - 1);
+  x_w = (jj == 0) ? (jj + params.nx - 1) : (jj - 1);
+
+  index = ii*params.nx + jj;
+
+  /* propagate densities to neighbouring cells, following
+  ** appropriate directions of travel and writing into
+  ** scratch space grid */
+  tmp_cells[ii *params.nx + jj].speeds[0]  = cells[index].speeds[0]; /* central cell, */
+                                           /* no movement   */
+  tmp_cells[ii *params.nx + x_e].speeds[1] = cells[index].speeds[1]; /* east */
+  tmp_cells[y_n*params.nx + jj].speeds[2]  = cells[index].speeds[2]; /* north */
+  tmp_cells[ii *params.nx + x_w].speeds[3] = cells[index].speeds[3]; /* west */
+  tmp_cells[y_s*params.nx + jj].speeds[4]  = cells[index].speeds[4]; /* south */
+  tmp_cells[y_n*params.nx + x_e].speeds[5] = cells[index].speeds[5]; /* north-east */
+  tmp_cells[y_n*params.nx + x_w].speeds[6] = cells[index].speeds[6]; /* north-west */
+  tmp_cells[y_s*params.nx + x_w].speeds[7] = cells[index].speeds[7]; /* south-west */
+  tmp_cells[y_s*params.nx + x_e].speeds[8] = cells[index].speeds[8]; /* south-east */
+}
+
 void propagate(const param_t params, speed_t* cells, speed_t* tmp_cells)
 {
     int ii,jj;            /* generic counters */
     int x_e,x_w,y_n,y_s;  /* indices of neighbouring cells */
     int index;
 
-    #pragma omp parallel default(none) shared(cells,tmp_cells) private(ii,jj,y_n,x_e,y_s,x_w,index)
-    {
-        #pragma omp for collapse(2) schedule(guided) nowait
-        /* loop over _all_ cells */
-        for (ii = 0; ii < params.ny; ii++)
+    if(params.ny >= LARGE_PIPE_SIZE) {
+        /* GUIDED SCHEDULING FOR LARGE INPUTS */
+        #pragma omp parallel default(none) shared(cells,tmp_cells) private(ii,jj,y_n,x_e,y_s,x_w,index)
         {
-            for (jj = 0; jj < params.nx; jj++)
+            #pragma omp for collapse(2) schedule(guided) nowait
+            /* loop over _all_ cells */
+            for (ii = 0; ii < params.ny; ii++)
             {
-                /* determine indices of axis-direction neighbours
-                ** respecting periodic boundary conditions (wrap around) */
-                y_n = (ii + 1) % params.ny;
-                x_e = (jj + 1) % params.nx;
-                y_s = (ii == 0) ? (ii + params.ny - 1) : (ii - 1);
-                x_w = (jj == 0) ? (jj + params.nx - 1) : (jj - 1);
-
-                index = ii*params.nx + jj;
-
-                /* propagate densities to neighbouring cells, following
-                ** appropriate directions of travel and writing into
-                ** scratch space grid */
-                tmp_cells[ii *params.nx + jj].speeds[0]  = cells[index].speeds[0]; /* central cell, */
-                                                         /* no movement   */
-                tmp_cells[ii *params.nx + x_e].speeds[1] = cells[index].speeds[1]; /* east */
-                tmp_cells[y_n*params.nx + jj].speeds[2]  = cells[index].speeds[2]; /* north */
-                tmp_cells[ii *params.nx + x_w].speeds[3] = cells[index].speeds[3]; /* west */
-                tmp_cells[y_s*params.nx + jj].speeds[4]  = cells[index].speeds[4]; /* south */
-                tmp_cells[y_n*params.nx + x_e].speeds[5] = cells[index].speeds[5]; /* north-east */
-                tmp_cells[y_n*params.nx + x_w].speeds[6] = cells[index].speeds[6]; /* north-west */
-                tmp_cells[y_s*params.nx + x_w].speeds[7] = cells[index].speeds[7]; /* south-west */
-                tmp_cells[y_s*params.nx + x_e].speeds[8] = cells[index].speeds[8]; /* south-east */
+                for (jj = 0; jj < params.nx; jj++)
+                {
+                    propagate_loop(params, cells, tmp_cells, ii, jj, y_n, x_e, y_s, x_w, index);
+                }
+            }
+        }
+    } else {
+        /* STATIC SCHEDULING FOR LARGE INPUTS */
+        #pragma omp parallel default(none) shared(cells,tmp_cells) private(ii,jj,y_n,x_e,y_s,x_w,index)
+        {
+            #pragma omp for collapse(2) schedule(static) nowait
+            /* loop over _all_ cells */
+            for (ii = 0; ii < params.ny; ii++)
+            {
+                for (jj = 0; jj < params.nx; jj++)
+                {
+                    propagate_loop(params, cells, tmp_cells, ii, jj, y_n, x_e, y_s, x_w, index);
+                }
             }
         }
     }
