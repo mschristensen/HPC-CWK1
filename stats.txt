@@ -184,4 +184,24 @@ Elapsed time:                   33.524952 (s)
 Elapsed user CPU time:          533.849842 (s)
 Elapsed system CPU time:        0.126980 (s)
 
+# Merged propagate with collision-rebound-av_vels, and parallelised
+# simulationc, lbm.h/c, utils.c
+# 6aa125f1f55aa15b41edab0c59ae5844b2aa805d 
+./lbm -a ./av_vels.dat -f ./final_state.dat -p ../inputs/large_pipe.params
+==done==
+Reynolds number:                8.530672073364E+00
+Elapsed time:                   26.984378 (s)
+Elapsed user CPU time:          430.250591 (s)
+Elapsed system CPU time:        0.122981 (s)
+
+# Slight serial optimisation, in local_density for loop (line 228)
+# simulation.c
+# b0e875592a68d24c7cac313eca1bc60d18e5dae0
+./lbm -a ./av_vels.dat -f ./final_state.dat -p ../inputs/large_pipe.params
+==done==
+Reynolds number:                8.530673027039E+00
+Elapsed time:                   25.752803 (s)
+Elapsed user CPU time:          410.708562 (s)
+Elapsed system CPU time:        0.110983 (s)
+
 
