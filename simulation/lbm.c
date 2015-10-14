@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
     for (ii = 0; ii < params.max_iters; ii++)
     {
         av_vels[ii] = timestep(params, accel_area, cells, tmp_cells, tmp_tmp_cells, obstacles);
-        swap(&cells, &tmp_cells);
+        swap(&cells, &tmp_tmp_cells);
 
         #ifdef DEBUG
         printf("==timestep: %d==\n", ii);

@@ -22,7 +22,7 @@ float timestep(const param_t params, const accel_area_t accel_area,
     speed_t* cells, speed_t* tmp_cells, speed_t* tmp_tmp_cells, char* obstacles)
 {
     accelerate_flow(params,accel_area,cells,obstacles);
-    return propagate(params,cells,tmp_cells,tmp_tmp_cells,obstacles);
+    return d2q9bgk(params,cells,tmp_cells,tmp_tmp_cells,obstacles);
 }
 
 void accelerate_flow(const param_t params, const accel_area_t accel_area,
@@ -126,15 +126,15 @@ float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t*
                 ** Now uses A-A pattern (rather than A-B) as per
                 ** https://www.cs.arizona.edu/~pbailey/Accelerating_GPU_LBM.pdf
                 ** to facilitate merge with rebound step */
-                tmp_tmp_cells[index].speeds[0] = cells[index].speeds[0];                //central cell
-                tmp_tmp_cells[index].speeds[1] = cells[ii *params.nx + x_w].speeds[1];  //east speed from west-side cell
-                tmp_tmp_cells[index].speeds[2] = cells[y_s*params.nx + jj].speeds[2];   //north speed from south-side cell
-                tmp_tmp_cells[index].speeds[3] = cells[ii *params.nx + x_e].speeds[3];  //west speed from east-side cell
-                tmp_tmp_cells[index].speeds[4] = cells[y_n*params.nx + jj].speeds[4];   //south speed from north-side cell
-                tmp_tmp_cells[index].speeds[5] = cells[y_s*params.nx + x_w].speeds[5];  //north-east speed from south-west-side cell
-                tmp_tmp_cells[index].speeds[6] = cells[y_s*params.nx + x_e].speeds[6];  //north-west speed from south-east-side cell
-                tmp_tmp_cells[index].speeds[7] = cells[y_n*params.nx + x_e].speeds[7];  //south-west speed from north-east-side cell
-                tmp_tmp_cells[index].speeds[8] = cells[y_n*params.nx + x_w].speeds[8];  //south-east speed from north-west-side cell
+                tmp_cells[index].speeds[0] = cells[index].speeds[0];                //central cell
+                tmp_cells[index].speeds[1] = cells[ii *params.nx + x_w].speeds[1];  //east speed from west-side cell
+                tmp_cells[index].speeds[2] = cells[y_s*params.nx + jj].speeds[2];   //north speed from south-side cell
+                tmp_cells[index].speeds[3] = cells[ii *params.nx + x_e].speeds[3];  //west speed from east-side cell
+                tmp_cells[index].speeds[4] = cells[y_n*params.nx + jj].speeds[4];   //south speed from north-side cell
+                tmp_cells[index].speeds[5] = cells[y_s*params.nx + x_w].speeds[5];  //north-east speed from south-west-side cell
+                tmp_cells[index].speeds[6] = cells[y_s*params.nx + x_e].speeds[6];  //north-west speed from south-east-side cell
+                tmp_cells[index].speeds[7] = cells[y_n*params.nx + x_e].speeds[7];  //south-west speed from north-east-side cell
+                tmp_cells[index].speeds[8] = cells[y_n*params.nx + x_w].speeds[8];  //south-east speed from north-west-side cell
 
                 //tmp_tmp_cells[index].speeds now correct
                 //cells[index] cannot be written to as original values are needed in later iterations
@@ -143,14 +143,14 @@ float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t*
                 if (obstacles[index])
                 {
                     /* REBOUND STEP */
-                    tmp_cells[index].speeds[1] = tmp_tmp_cells[index].speeds[3];
-                    tmp_cells[index].speeds[2] = tmp_tmp_cells[index].speeds[4];
-                    tmp_cells[index].speeds[3] = tmp_tmp_cells[index].speeds[1];
-                    tmp_cells[index].speeds[4] = tmp_tmp_cells[index].speeds[2];
-                    tmp_cells[index].speeds[5] = tmp_tmp_cells[index].speeds[7];
-                    tmp_cells[index].speeds[6] = tmp_tmp_cells[index].speeds[8];
-                    tmp_cells[index].speeds[7] = tmp_tmp_cells[index].speeds[5];
-                    tmp_cells[index].speeds[8] = tmp_tmp_cells[index].speeds[6];
+                    tmp_tmp_cells[index].speeds[1] = tmp_cells[index].speeds[3];
+                    tmp_tmp_cells[index].speeds[2] = tmp_cells[index].speeds[4];
+                    tmp_tmp_cells[index].speeds[3] = tmp_cells[index].speeds[1];
+                    tmp_tmp_cells[index].speeds[4] = tmp_cells[index].speeds[2];
+                    tmp_tmp_cells[index].speeds[5] = tmp_cells[index].speeds[7];
+                    tmp_tmp_cells[index].speeds[6] = tmp_cells[index].speeds[8];
+                    tmp_tmp_cells[index].speeds[7] = tmp_cells[index].speeds[5];
+                    tmp_tmp_cells[index].speeds[8] = tmp_cells[index].speeds[6];
                 } else {
                     /* COLLISION STEP */
                     /* compute local density total */
@@ -158,25 +158,25 @@ float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t*
 
                     for (kk = 0; kk < NSPEEDS; kk++)
                     {
-                        local_density += tmp_tmp_cells[index].speeds[kk];
+                        local_density += tmp_cells[index].speeds[kk];
                     }
 
                     /* compute x velocity component */
-                    u_x = (tmp_tmp_cells[index].speeds[1] +
-                            tmp_tmp_cells[index].speeds[5] +
-                            tmp_tmp_cells[index].speeds[8]
-                        - (tmp_tmp_cells[index].speeds[3] +
-                            tmp_tmp_cells[index].speeds[6] +
-                            tmp_tmp_cells[index].speeds[7]))
+                    u_x = (tmp_cells[index].speeds[1] +
+                            tmp_cells[index].speeds[5] +
+                            tmp_cells[index].speeds[8]
+                        - (tmp_cells[index].speeds[3] +
+                            tmp_cells[index].speeds[6] +
+                            tmp_cells[index].speeds[7]))
                         / local_density;
 
                     /* compute y velocity component */
-                    u_y = (tmp_tmp_cells[index].speeds[2] +
-                            tmp_tmp_cells[index].speeds[5] +
-                            tmp_tmp_cells[index].speeds[6]
-                        - (tmp_tmp_cells[index].speeds[4] +
-                            tmp_tmp_cells[index].speeds[7] +
-                            tmp_tmp_cells[index].speeds[8]))
+                    u_y = (tmp_cells[index].speeds[2] +
+                            tmp_cells[index].speeds[5] +
+                            tmp_cells[index].speeds[6]
+                        - (tmp_cells[index].speeds[4] +
+                            tmp_cells[index].speeds[7] +
+                            tmp_cells[index].speeds[8]))
                         / local_density;
 
                     /* velocity squared */
@@ -225,9 +225,9 @@ float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t*
                     /* relaxation step (part of collision) */
                     for (kk = 0; kk < NSPEEDS; kk++)
                     {
-                        tmp_cells[index].speeds[kk] =
-                            (tmp_tmp_cells[index].speeds[kk] + params.omega *
-                            (d_equ[kk] - tmp_tmp_cells[index].speeds[kk]));
+                        tmp_tmp_cells[index].speeds[kk] =
+                            (tmp_cells[index].speeds[kk] + params.omega *
+                            (d_equ[kk] - tmp_cells[index].speeds[kk]));
                     }
 
                     /* AV_VELS STEP*/
@@ -235,25 +235,25 @@ float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t*
                     local_density = 0.0;
                     for (kk = 0; kk < NSPEEDS; kk++)
                     {
-                        local_density += tmp_cells[index].speeds[kk];
+                        local_density += tmp_tmp_cells[index].speeds[kk];
                     }
 
                     /* x-component of velocity */
-                    u_x = (tmp_cells[index].speeds[1] +
-                            tmp_cells[index].speeds[5] +
-                            tmp_cells[index].speeds[8]
-                        - (tmp_cells[index].speeds[3] +
-                            tmp_cells[index].speeds[6] +
-                            tmp_cells[index].speeds[7])) /
+                    u_x = (tmp_tmp_cells[index].speeds[1] +
+                            tmp_tmp_cells[index].speeds[5] +
+                            tmp_tmp_cells[index].speeds[8]
+                        - (tmp_tmp_cells[index].speeds[3] +
+                            tmp_tmp_cells[index].speeds[6] +
+                            tmp_tmp_cells[index].speeds[7])) /
                         local_density;
 
                     /* compute y velocity component */
-                    u_y = (tmp_cells[index].speeds[2] +
-                            tmp_cells[index].speeds[5] +
-                            tmp_cells[index].speeds[6]
-                        - (tmp_cells[index].speeds[4] +
-                            tmp_cells[index].speeds[7] +
-                            tmp_cells[index].speeds[8])) /
+                    u_y = (tmp_tmp_cells[index].speeds[2] +
+                            tmp_tmp_cells[index].speeds[5] +
+                            tmp_tmp_cells[index].speeds[6]
+                        - (tmp_tmp_cells[index].speeds[4] +
+                            tmp_tmp_cells[index].speeds[7] +
+                            tmp_tmp_cells[index].speeds[8])) /
                         local_density;
 
                     /* accumulate the norm of x- and y- velocity components */
