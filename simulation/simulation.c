@@ -222,19 +222,17 @@ float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t*
                         + (u[8] * u[8]) / (2.0 * c_sq * c_sq)
                         - u_sq / (2.0 * c_sq));
 
-                    /* relaxation step (part of collision) */
-                    for (kk = 0; kk < NSPEEDS; kk++)
-                    {
-                        tmp_tmp_cells[index].speeds[kk] =
-                            (tmp_cells[index].speeds[kk] + params.omega *
-                            (d_equ[kk] - tmp_cells[index].speeds[kk]));
-                    }
 
-                    /* AV_VELS STEP*/
                     /* local density total */
                     local_density = 0.0;
                     for (kk = 0; kk < NSPEEDS; kk++)
                     {
+                        /* relaxation step (part of COLLISION STEP) */
+                        tmp_tmp_cells[index].speeds[kk] =
+                            (tmp_cells[index].speeds[kk] + params.omega *
+                            (d_equ[kk] - tmp_cells[index].speeds[kk]));
+
+                        /* AV_VELS STEP */
                         local_density += tmp_tmp_cells[index].speeds[kk];
                     }
 

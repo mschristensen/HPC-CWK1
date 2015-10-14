@@ -59,6 +59,8 @@
 
 #include "lbm.h"
 
+/* Function to swap two arrays (by exchanging the pointers), as per
+** http://stackoverflow.com/questions/13246615/swap-two-pointers-to-exchange-arrays */
 void swap(speed_t** one, speed_t** two){
   speed_t* temp = *one;
   *one = *two;
