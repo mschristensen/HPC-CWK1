@@ -1,8 +1,8 @@
-CC=tau_cc.sh
-#CC=gcc
+#CC=tau_cc.sh
+CC=icc
 
-CFLAGS=-g -Wall -fopenmp #-Ofast
-#CFLAGS=-O3 -no-prec-div -ansi-alias -fast -openmp
+#CFLAGS=-fopenmp -Ofast#-g -Wall -fopenmp #-Ofast
+CFLAGS=-O3 -no-prec-div -ansi-alias -fast -openmp
 
 EXE=lbm
 

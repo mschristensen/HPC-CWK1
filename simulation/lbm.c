@@ -59,6 +59,12 @@
 
 #include "lbm.h"
 
+void swap(speed_t** one, speed_t** two){
+  speed_t* temp = *one;
+  *one = *two;
+  *two = temp;
+}
+
 /*
 ** main program:
 ** initialise, timestep loop, finalise
@@ -77,6 +83,7 @@ int main(int argc, char* argv[])
     param_t  params;              /* struct to hold parameter values */
     speed_t* cells     = NULL;    /* grid containing fluid densities */
     speed_t* tmp_cells = NULL;    /* scratch space */
+    speed_t* tmp_tmp_cells = NULL;    /* scratch space */
     char*    obstacles = NULL;    /* grid indicating which cells are blocked */
     float*  av_vels   = NULL;    /* a record of the av. velocity computed for each timestep */
 
@@ -89,7 +96,7 @@ int main(int argc, char* argv[])
 
     parse_args(argc, argv, &final_state_file, &av_vels_file, &param_file);
 
-    initialise(param_file, &accel_area, &params, &cells, &tmp_cells, &obstacles, &av_vels);
+    initialise(param_file, &accel_area, &params, &cells, &tmp_cells, &tmp_tmp_cells, &obstacles, &av_vels);
 
     /* iterate for max_iters timesteps */
     gettimeofday(&timstr,NULL);
@@ -97,7 +104,8 @@ int main(int argc, char* argv[])
 
     for (ii = 0; ii < params.max_iters; ii++)
     {
-        av_vels[ii] = timestep(params, accel_area, cells, tmp_cells, obstacles);
+        av_vels[ii] = timestep(params, accel_area, cells, tmp_cells, tmp_tmp_cells, obstacles);
+        swap(&cells, &tmp_cells);
 
         #ifdef DEBUG
         printf("==timestep: %d==\n", ii);
@@ -122,7 +130,7 @@ int main(int argc, char* argv[])
     printf("Elapsed system CPU time:\t%.6f (s)\n", systim);
 
     write_values(final_state_file, av_vels_file, params, cells, obstacles, av_vels);
-    finalise(&cells, &tmp_cells, &obstacles, &av_vels);
+    finalise(&cells, &tmp_cells, &tmp_tmp_cells, &obstacles, &av_vels);
 
     return EXIT_SUCCESS;
 }
