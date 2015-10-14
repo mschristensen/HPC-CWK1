@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <getopt.h>
+#include <omp.h>
 
 #include "lbm.h"
 

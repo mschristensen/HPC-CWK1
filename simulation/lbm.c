@@ -146,6 +146,7 @@ void write_values(const char * final_state_file, const char * av_vels_file,
         DIE("could not open file output file");
     }
 
+    /* loop over the cells in the grid */
     for (ii = 0; ii < params.ny; ii++)
     {
         for (jj = 0; jj < params.nx; jj++)

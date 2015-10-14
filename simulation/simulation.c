@@ -7,6 +7,10 @@
 
 #define LARGE_PIPE_SIZE 1000
 //TODO::
+
+//added parallelisation to lbm (removed from utils tho) but need to run make check!
+
+
 //  -Compare parallel speed without collapse(2)
 //  -Try scheduling to optimise cache?
 //  -Try sections to minimise thread spawning overhead?
