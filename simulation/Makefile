@@ -6,13 +6,13 @@ CFLAGS=-O3 -no-prec-div -ansi-alias -fast -openmp
 
 EXE=lbm
 
-PARAM_FILE=../inputs/large_pipe.params
+PARAM_FILE=../inputs/rect.params
 
 FINAL_STATE_FILE=./final_state.dat
 AV_VELS_FILE=./av_vels.dat
 
-REF_FINAL_STATE_FILE=../check/large_pipe.final_state.dat
-REF_AV_VELS_FILE=../check/large_pipe.av_vels.dat
+REF_FINAL_STATE_FILE=../check/rect.final_state.dat
+REF_AV_VELS_FILE=../check/rect.av_vels.dat
 
 LDLIBS=-lm
 
