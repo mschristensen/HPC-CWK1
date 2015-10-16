@@ -5,7 +5,6 @@
 #include <omp.h>
 #include "lbm.h"
 
-#define LARGE_PIPE_SIZE 1000
 #define GUIDED_THRESHOLD 65536  //256 * 256
 //TODO::
 //  -Compare parallel speed without collapse(2)
