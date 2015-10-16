@@ -1,18 +1,16 @@
-#CC=tau_cc.sh
 CC=icc
 
-#CFLAGS=-g -Wall -fopenmp #-Ofast
 CFLAGS=-O3 -no-prec-div -ansi-alias -fast -openmp
 
 EXE=lbm
 
-PARAM_FILE=../inputs/box.params
+PARAM_FILE=../inputs/large_pipe.params
 
 FINAL_STATE_FILE=./final_state.dat
 AV_VELS_FILE=./av_vels.dat
 
-REF_FINAL_STATE_FILE=../check/box.final_state.dat
-REF_AV_VELS_FILE=../check/box.av_vels.dat
+REF_FINAL_STATE_FILE=../check/large_pipe.final_state.dat
+REF_AV_VELS_FILE=../check/large_pipe.av_vels.dat
 
 LDLIBS=-lm
 

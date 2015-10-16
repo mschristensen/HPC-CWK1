@@ -5,18 +5,7 @@
 #include <omp.h>
 #include "lbm.h"
 
-#define GUIDED_THRESHOLD 65536  //256 * 256
-//TODO::
-//  -Compare parallel speed without collapse(2)
-//  -Try scheduling to optimise cache?
-//  -Try sections to minimise thread spawning overhead?
-//  -Try prefetching?
-//  -add if-condition (an omp directive) to parallelise only for large inputs? e.g. for accelerate_flow
-//  -spawn threads only once and add barriers? may need a single monolithic function, or pass the vars in as args (in a struct?)
-//  -Parallelise utils.c
-//  -Reduce cache-thrashing where possible
-//  -Experiment with scheduling
-//  -Experiment with task-level parallelism for triple nested loops
+#define GUIDED_THRESHOLD 65536  //Input > 256 * 256 uses guided scheduling
 
 float timestep(const param_t params, const accel_area_t accel_area,
     speed_t* cells, speed_t* tmp_cells, speed_t* tmp_tmp_cells, char* obstacles)
@@ -37,7 +26,6 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
     if (accel_area.col_or_row == ACCEL_COLUMN)
     {
         jj = accel_area.idx;
-        //#pragma omp parallel for if(params.ny >= LARGE_PIPE_SIZE) default(none) shared(cells,obstacles) private(index,ii) firstprivate(jj,w1,w2)
         for (ii = 0; ii < params.ny; ii++)
         {
             index = ii*params.nx + jj;
@@ -62,7 +50,6 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
     else
     {
         ii = accel_area.idx;
-        //#pragma omp parallel for if(params.nx >= LARGE_PIPE_SIZE) default(none) shared(cells,obstacles) private(index,jj) firstprivate(ii,w1,w2)
         for (jj = 0; jj < params.nx; jj++)
         {
             index = ii*params.nx + jj;
@@ -86,6 +73,9 @@ void accelerate_flow(const param_t params, const accel_area_t accel_area,
     }
 }
 
+/* This function is the result of a merge between propagate, rebound, collision and av_velocity.
+** Please refer to the report.
+** Code is deliberately non-DRY because not encapsulating the loop body in a function yields a performance increase. */
 float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t* tmp_tmp_cells, char* obstacles)
 {
     int ii,jj,kk;                /* generic counters */
@@ -108,6 +98,7 @@ float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t*
 
     #pragma omp parallel default(none) shared(cells,tmp_cells,obstacles,tmp_tmp_cells,tot_u,tot_cells) private(ii,jj,kk,index,u_x,u_y,u_sq,local_density,u,d_equ,y_n,x_e,y_s,x_w) firstprivate(c_sq,w0,w1,w2)
     {
+        //If the input size is large enough, use guided scheduling, otherwise use static
         if(params.nx * params.ny >= GUIDED_THRESHOLD)
         {
           #pragma omp for reduction(+:tot_u,tot_cells) schedule(guided)
@@ -125,9 +116,9 @@ float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t*
 
                   /* Propagate densities to neighbouring cells, following
                   ** appropriate directions of travel.
-                  ** Now uses A-A pattern (rather than A-B) as per
-                  ** https://www.cs.arizona.edu/~pbailey/Accelerating_GPU_LBM.pdf
-                  ** to facilitate merge with rebound step */
+                  ** Now updates *all* of the speed values in the *current* cell
+                  ** by *reading* from the neighbouring cells, (to facilitate
+                  ** the merge with rebound-collision-av_velocity step) */
                   tmp_cells[index].speeds[0] = cells[index].speeds[0];                //central cell
                   tmp_cells[index].speeds[1] = cells[ii *params.nx + x_w].speeds[1];  //east speed from west-side cell
                   tmp_cells[index].speeds[2] = cells[y_s*params.nx + jj].speeds[2];   //north speed from south-side cell
@@ -138,8 +129,10 @@ float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t*
                   tmp_cells[index].speeds[7] = cells[y_n*params.nx + x_e].speeds[7];  //south-west speed from north-east-side cell
                   tmp_cells[index].speeds[8] = cells[y_n*params.nx + x_w].speeds[8];  //south-east speed from north-west-side cell
 
-                  //tmp_tmp_cells[index].speeds now correct
-                  //cells[index] cannot be written to as original values are needed in later iterations
+                  /* tmp_tmp_cells[index].speeds now correct, but
+                  ** cells[index] cannot be written to as original values are
+                  ** needed in later iterations; therefore a new scratch-space
+                  ** grid, tmp_tmp_cells, is used. */
 
                   /* if the cell contains an obstacle */
                   if (obstacles[index])
@@ -279,9 +272,9 @@ float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t*
 
                   /* Propagate densities to neighbouring cells, following
                   ** appropriate directions of travel.
-                  ** Now uses A-A pattern (rather than A-B) as per
-                  ** https://www.cs.arizona.edu/~pbailey/Accelerating_GPU_LBM.pdf
-                  ** to facilitate merge with rebound step */
+                  ** Now updates *all* of the speed values in the *current* cell
+                  ** by *reading* from the neighbouring cells, (to facilitate
+                  ** the merge with rebound-collision-av_velocity step) */
                   tmp_cells[index].speeds[0] = cells[index].speeds[0];                //central cell
                   tmp_cells[index].speeds[1] = cells[ii *params.nx + x_w].speeds[1];  //east speed from west-side cell
                   tmp_cells[index].speeds[2] = cells[y_s*params.nx + jj].speeds[2];   //north speed from south-side cell
@@ -292,8 +285,10 @@ float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t*
                   tmp_cells[index].speeds[7] = cells[y_n*params.nx + x_e].speeds[7];  //south-west speed from north-east-side cell
                   tmp_cells[index].speeds[8] = cells[y_n*params.nx + x_w].speeds[8];  //south-east speed from north-west-side cell
 
-                  //tmp_tmp_cells[index].speeds now correct
-                  //cells[index] cannot be written to as original values are needed in later iterations
+                  /* tmp_tmp_cells[index].speeds now correct, but
+                  ** cells[index] cannot be written to as original values are
+                  ** needed in later iterations; therefore a new scratch-space
+                  ** grid, tmp_tmp_cells, is used. */
 
                   /* if the cell contains an obstacle */
                   if (obstacles[index])
