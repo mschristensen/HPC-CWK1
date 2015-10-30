@@ -12,7 +12,6 @@ float timestep(const param_t params, const accel_area_t accel_area,
 {
     accelerate_flow(params,accel_area,cells,obstacles);
     return d2q9bgk(params,cells,tmp_cells,tmp_tmp_cells,obstacles);
-
     /*
     *   TODO
     *   Run OpenCL kernels on the device

@@ -257,6 +257,55 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     *   TODO
     *   Allocate memory and create kernels
     */
+
+    /**** OPENCL EXAMPLE VECTOR ADD ON GPU ****/
+
+    // create input vectors and assign values *on the host*
+    float h_a[10], h_b[10], h_c[10];
+    int _i;
+    for (_i = 0; _i < 10; _i++) {
+        h_a[_i] = 1.0;
+        h_b[_i] = 2.0;
+    }
+
+    // allocate buffer memory objects
+    // CL_MEM_COPY_HOST_PTR flag required for data that is copied to the device
+    cl_mem d_a = clCreateBuffer(lbm_context->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                       sizeof(cl_float)*10, h_a, NULL);
+    cl_mem d_b = clCreateBuffer(lbm_context->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                       sizeof(cl_float)*10, h_b, NULL);
+    cl_mem d_c = clCreateBuffer(lbm_context->context, CL_MEM_WRITE_ONLY,
+                       sizeof(cl_float)*10, h_c, NULL);
+
+    // create the kernel for the defined vadd function (kernels.cl)
+    cl_kernel kernel = clCreateKernel(program, "vadd", &err);
+
+    // set the kernel args
+    err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_a);
+    err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_b);
+    err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &d_c);
+
+    // set work-item problem dimensions
+    #define NUM_DIMENSIONS 1 //1D array
+    size_t global_work_size[NUM_DIMENSIONS] = {10}; //total problem size = 10
+    size_t local_work_size[NUM_DIMENSIONS] = {1};   //per work-item size = 1
+
+    // execute kernel
+    err = clEnqueueNDRangeKernel(lbm_context->queue, kernel, NUM_DIMENSIONS, NULL,
+                        global_work_size, local_work_size,0,NULL,NULL);
+
+    // read output array (blocking so data is ready after this call)
+    err = clEnqueueReadBuffer(lbm_context->queue, d_c,
+                              CL_TRUE, 0,
+                              10*sizeof(cl_float), h_c,
+                              0, NULL, NULL);
+
+    // print results
+    printf("h_c = ");
+    for (_i = 0; _i < 10; _i++) {
+      printf("%f ", h_c[_i]);
+    }
+    printf("\n");
 }
 
 void opencl_finalise(lbm_context_t lbm_context)
