@@ -3,7 +3,9 @@
 This is branch is for HPC CWK2, using OpenCL.
 Program restructuring from CWK1 is carried forward; OpenMP is not.
 
-This private repository is labelled `mygithub`. Only push to this repo, using `git push mygithub master`... do NOT use `origin`.
+This private repository is labelled `mygithub`.
+The branch for Cwk2 is called opencl.
+Only push to this repo, using `git push mygithub opencl`... do NOT use `origin` and do NOT use `master`.
 
 # HPC Coursework (original markdown):
 
