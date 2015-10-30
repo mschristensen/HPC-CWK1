@@ -143,7 +143,7 @@ void list_opencl_platforms(void)
 }
 
 void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
-    lbm_context_t * lbm_context, speed_t * cells, int * obstacles)
+    lbm_context_t * lbm_context, speed_t * cells, char * obstacles)
 {
     /* get device etc. */
     cl_platform_id * platforms = NULL;
@@ -264,4 +264,3 @@ void opencl_finalise(lbm_context_t lbm_context)
     clReleaseCommandQueue(lbm_context.queue);
     clReleaseContext(lbm_context.context);
 }
-

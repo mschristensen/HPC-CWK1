@@ -1,4 +1,11 @@
-# HPC Coursework
+# MY NOTES
+
+This is branch is for HPC CWK2, using OpenCL.
+Program restructuring from CWK1 is carried forward; OpenMP is not.
+
+This private repository is labelled `mygithub`. Only push to this repo, using `git push mygithub master`... do NOT use `origin`.
+
+# HPC Coursework (original markdown):
 
 Base coursework for HPC 2015 class
 

@@ -28,4 +28,3 @@ typedef struct {
 *   TODO
 *   Write OpenCL kernels
 */
-

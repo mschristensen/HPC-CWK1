@@ -1,6 +1,6 @@
 CC=gcc
 
-CFLAGS=-O3 -g -Wall -Wextra -Wno-unused-parameter
+CFLAGS=-Ofast -g -Wall -Wextra -Wno-unused-parameter
 
 EXE=lbm
 
@@ -67,4 +67,3 @@ submission:
 
 clean:
 	rm -f *.o $(EXE)
-
