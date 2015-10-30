@@ -1,10 +1,11 @@
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+//To use double data types, uncomment the following line:
+//#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 #define NSPEEDS 9
 
 /* struct to hold the 'speed' values */
 typedef struct {
-    double speeds[NSPEEDS];
+    float speeds[NSPEEDS];
 } speed_t;
 
 /* struct to hold the parameter values */
@@ -13,9 +14,9 @@ typedef struct {
     int ny;            /* no. of cells in y-direction */
     int max_iters;      /* no. of iterations */
     int reynolds_dim;  /* dimension for Reynolds number */
-    double density;       /* density per link */
-    double accel;         /* density redistribution */
-    double omega;         /* relaxation parameter */
+    float density;       /* density per link */
+    float accel;         /* density redistribution */
+    float omega;         /* relaxation parameter */
 } param_t;
 
 typedef enum { ACCEL_ROW=0, ACCEL_COLUMN=1 } accel_e;
