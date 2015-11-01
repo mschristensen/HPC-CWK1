@@ -10,8 +10,35 @@ float timestep(const param_t params, const accel_area_t accel_area,
     lbm_context_t lbm_context,
     speed_t* cells, speed_t* tmp_cells, speed_t* tmp_tmp_cells, char* obstacles)
 {
-    accelerate_flow(params,accel_area,cells,obstacles);
-    return d2q9bgk(params,cells,tmp_cells,tmp_tmp_cells,obstacles);
+    // set work-item problem dimensions
+    #define NUM_DIMENSIONS 1 //1D array
+    size_t global_work_size[NUM_DIMENSIONS] = {10}; //total problem size = 10
+    size_t local_work_size[NUM_DIMENSIONS] = {1};   //per work-item size = 1
+
+    // execute kernel
+    cl_int err;
+    err = clEnqueueNDRangeKernel(lbm_context.queue, lbm_context.kernels[0].kernel, NUM_DIMENSIONS, NULL,
+                        global_work_size, local_work_size,0,NULL,NULL);
+
+    float h_c[10];
+    // read output array (blocking so data is ready after this call)
+    err = clEnqueueReadBuffer(lbm_context.queue, lbm_context.kernels[0].args[2],
+                              CL_TRUE, 0,
+                              10*sizeof(cl_float), h_c,
+                              0, NULL, NULL);
+
+    // print results
+    printf("h_c = ");
+    int i;
+    for (i = 0; i < 10; i++) {
+      printf("%f ", h_c[i]);
+    }
+    printf("\n");
+    if(err) printf("Error\n");
+
+    //accelerate_flow(params,accel_area,cells,obstacles);
+    //return d2q9bgk(params,cells,tmp_cells,tmp_tmp_cells,obstacles);
+    return 0.0;
     /*
     *   TODO
     *   Run OpenCL kernels on the device

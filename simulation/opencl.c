@@ -278,34 +278,20 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
                        sizeof(cl_float)*10, h_c, NULL);
 
     // create the kernel for the defined vadd function (kernels.cl)
-    cl_kernel kernel = clCreateKernel(program, "vadd", &err);
+    #define KERNEL_NUM 1
+    lbm_context->kernels = malloc(sizeof(lbm_kernel_t) * KERNEL_NUM);
+    lbm_context->kernels[0].kernel = clCreateKernel(program, "vadd", &err);
+
+    // allocate memory for the kernel args
+    lbm_context->kernels[0].args = malloc(sizeof(cl_mem) * 3);
+    lbm_context->kernels[0].args[0] = d_a;
+    lbm_context->kernels[0].args[1] = d_b;
+    lbm_context->kernels[0].args[2] = d_c;
 
     // set the kernel args
-    err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_a);
-    err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_b);
-    err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &d_c);
-
-    // set work-item problem dimensions
-    #define NUM_DIMENSIONS 1 //1D array
-    size_t global_work_size[NUM_DIMENSIONS] = {10}; //total problem size = 10
-    size_t local_work_size[NUM_DIMENSIONS] = {1};   //per work-item size = 1
-
-    // execute kernel
-    err = clEnqueueNDRangeKernel(lbm_context->queue, kernel, NUM_DIMENSIONS, NULL,
-                        global_work_size, local_work_size,0,NULL,NULL);
-
-    // read output array (blocking so data is ready after this call)
-    err = clEnqueueReadBuffer(lbm_context->queue, d_c,
-                              CL_TRUE, 0,
-                              10*sizeof(cl_float), h_c,
-                              0, NULL, NULL);
-
-    // print results
-    printf("h_c = ");
-    for (_i = 0; _i < 10; _i++) {
-      printf("%f ", h_c[_i]);
-    }
-    printf("\n");
+    err  = clSetKernelArg(lbm_context->kernels[0].kernel, 0, sizeof(cl_mem), &lbm_context->kernels[0].args[0]);
+    err |= clSetKernelArg(lbm_context->kernels[0].kernel, 1, sizeof(cl_mem), &lbm_context->kernels[0].args[1]);
+    err |= clSetKernelArg(lbm_context->kernels[0].kernel, 2, sizeof(cl_mem), &lbm_context->kernels[0].args[2]);
 }
 
 void opencl_finalise(lbm_context_t lbm_context)

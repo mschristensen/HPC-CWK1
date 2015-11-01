@@ -32,10 +32,17 @@ typedef struct {
     float obs_y_max;
 } obstacle_t;
 
+// Custom struct to allow kernels to be described in an lbm_context_t
+typedef struct {
+    cl_kernel kernel;         //the actual kernel
+    cl_mem* args;             //array of kernel args
+} lbm_kernel_t;
+
 typedef struct {
     cl_context context;
     cl_device_id device;
     cl_command_queue queue;
+    lbm_kernel_t* kernels;    //array of kernels
 } lbm_context_t;
 
 /* struct to hold the 'speed' values */
