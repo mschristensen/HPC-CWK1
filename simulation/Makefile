@@ -4,13 +4,13 @@ CFLAGS=-Ofast -g -Wall -Wextra -Wno-unused-parameter
 
 EXE=lbm
 
-PARAM_FILE=../inputs/small_pipe.params
+PARAM_FILE=../inputs/box.params
 
 FINAL_STATE_FILE=./final_state.dat
 AV_VELS_FILE=./av_vels.dat
 
-REF_FINAL_STATE_FILE=../check/small_pipe.final_state.dat
-REF_AV_VELS_FILE=../check/small_pipe.av_vels.dat
+REF_FINAL_STATE_FILE=../check/box.final_state.dat
+REF_AV_VELS_FILE=../check/box.av_vels.dat
 
 DEVICE=0
 

@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
     parse_args(argc, argv, &final_state_file, &av_vels_file, &param_file, &device_id);
 
     initialise(param_file, &accel_area, &params, &cells, &tmp_cells, &tmp_tmp_cells, &obstacles, &av_vels);
-    opencl_initialise(device_id, params, accel_area, &lbm_context, cells, obstacles);
+    opencl_initialise(device_id, params, accel_area, &lbm_context, cells, tmp_cells, tmp_tmp_cells, obstacles);
 
     /* iterate for max_iters timesteps */
     gettimeofday(&timstr,NULL);

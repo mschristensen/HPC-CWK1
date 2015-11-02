@@ -65,7 +65,7 @@ void initialise(const char* paramfile, accel_area_t * accel_area,
     char** obstacles_ptr, float** av_vels_ptr);
 
 void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
-    lbm_context_t * lbm_context, speed_t * cells, char * obstacles);
+    lbm_context_t * lbm_context, speed_t * cells, speed_t * tmp_cells, speed_t * tmp_tmp_cells, char * obstacles);
 void opencl_finalise(lbm_context_t lbm_context);
 
 void list_opencl_platforms(void);
