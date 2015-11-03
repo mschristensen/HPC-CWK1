@@ -222,7 +222,7 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
 
     source[source_size] = '\0';
 
-    cl_program program = clCreateProgramWithSource(lbm_context->context, 1, (const char**)&source, NULL, &err);
+    lbm_context->program = clCreateProgramWithSource(lbm_context->context, 1, (const char**)&source, NULL, &err);
 
     free(source);
     fclose(source_fp);
@@ -231,18 +231,18 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
 
     fprintf(stdout, "Building program\n");
 
-    err = clBuildProgram(program, 1, &lbm_context->device, NULL, NULL, NULL);
+    err = clBuildProgram(lbm_context->program, 1, &lbm_context->device, NULL, NULL, NULL);
 
     if (err == CL_BUILD_PROGRAM_FAILURE)
     {
         cl_int build_err;
         size_t log_size;
 
-        build_err = clGetProgramBuildInfo(program, lbm_context->device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+        build_err = clGetProgramBuildInfo(lbm_context->program, lbm_context->device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
         if (CL_SUCCESS != build_err) DIE("OpenCL error %d getting size of build log", build_err);
 
         char * build_log = (char *) calloc(log_size + 1, sizeof(char));
-        build_err = clGetProgramBuildInfo(program, lbm_context->device, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL);
+        build_err = clGetProgramBuildInfo(lbm_context->program, lbm_context->device, CL_PROGRAM_BUILD_LOG, log_size, build_log, NULL);
         if (CL_SUCCESS != build_err) DIE("OpenCL error %d getting build log", build_err);
 
         printf("OpenCL program build log:\n%s\n", build_log);
@@ -255,48 +255,48 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     *   Allocate memory and create kernels
     */
 
-    int grid_size = params.ny * params.nx;
-    printf("GRID SIZE = %d\n", grid_size);
-    float output[1];
-    cl_mem d_params         = clCreateBuffer(lbm_context->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                  sizeof(param_t), &params, NULL);
-    cl_mem d_cells          = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-                                  sizeof(speed_t) * grid_size, cells, NULL);
-    cl_mem d_tmp_cells      = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-                                  sizeof(speed_t) * grid_size, tmp_cells, NULL);
-    cl_mem d_tmp_tmp_cells  = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-                                  sizeof(speed_t) * grid_size, tmp_tmp_cells, NULL);
-    cl_mem d_obstacles      = clCreateBuffer(lbm_context->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                  sizeof(char) * grid_size, obstacles, NULL);
-    cl_mem d_output         = clCreateBuffer(lbm_context->context, CL_MEM_WRITE_ONLY, sizeof(float), output, NULL);
+    cl_int GRID_SIZE = params.ny * params.nx;
+    printf("GRID SIZE = %d\n", GRID_SIZE);
+    cl_int tot_cells[GRID_SIZE];           /* no. of cells used in calculation */
+    cl_float tot_u[GRID_SIZE];           /* accumulated magnitudes of velocity for each cell */
+
+    cl_mem d_params         = clCreateBuffer(lbm_context->context, CL_MEM_READ_ONLY  | CL_MEM_COPY_HOST_PTR, sizeof(param_t),             &params,      NULL);
+    cl_mem d_cells          = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(speed_t) * GRID_SIZE, cells,        NULL);
+    cl_mem d_tmp_cells      = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(speed_t) * GRID_SIZE, tmp_cells,    NULL);
+    cl_mem d_tmp_tmp_cells  = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(speed_t) * GRID_SIZE, tmp_tmp_cells,NULL);
+    cl_mem d_obstacles      = clCreateBuffer(lbm_context->context, CL_MEM_READ_ONLY  | CL_MEM_COPY_HOST_PTR, sizeof(char)    * GRID_SIZE, obstacles,    NULL);
+    cl_mem d_tot_u          = clCreateBuffer(lbm_context->context, CL_MEM_WRITE_ONLY,                        sizeof(cl_float)* GRID_SIZE, tot_u,        NULL);
+    cl_mem d_tot_cells      = clCreateBuffer(lbm_context->context, CL_MEM_WRITE_ONLY,                        sizeof(cl_int)  * GRID_SIZE, tot_cells,    NULL);
 
     // create the kernel for the defined d2q9bgk function (kernels.cl)
     #define KERNEL_NUM 1
+    #define NUM_ARGS 7
     lbm_context->kernels = malloc(sizeof(lbm_kernel_t) * KERNEL_NUM);
-    lbm_context->kernels[0].kernel = clCreateKernel(program, "d2q9bgk", &err);
+    lbm_context->kernels[0].kernel = clCreateKernel(lbm_context->program, "d2q9bgk", &err);
+    if (CL_SUCCESS != err) DIE("OpenCL error %d creating kernel", err);
 
     // allocate memory for the kernel args
-    lbm_context->kernels[0].args = malloc(sizeof(cl_mem) * 6);
+    lbm_context->kernels[0].args = malloc(sizeof(cl_mem) * NUM_ARGS);
     lbm_context->kernels[0].args[0] = d_params;
     lbm_context->kernels[0].args[1] = d_cells;
     lbm_context->kernels[0].args[2] = d_tmp_cells;
     lbm_context->kernels[0].args[3] = d_tmp_tmp_cells;
     lbm_context->kernels[0].args[4] = d_obstacles;
-    lbm_context->kernels[0].args[5] = d_output;
+    lbm_context->kernels[0].args[5] = d_tot_u;
+    lbm_context->kernels[0].args[6] = d_tot_cells;
 
-    // set the kernel args
     err  = clSetKernelArg(lbm_context->kernels[0].kernel, 0, sizeof(cl_mem), &lbm_context->kernels[0].args[0]);
-    err |= clSetKernelArg(lbm_context->kernels[0].kernel, 1, sizeof(cl_mem), &lbm_context->kernels[0].args[1]);
-    err |= clSetKernelArg(lbm_context->kernels[0].kernel, 2, sizeof(cl_mem), &lbm_context->kernels[0].args[2]);
-    err |= clSetKernelArg(lbm_context->kernels[0].kernel, 3, sizeof(cl_mem), &lbm_context->kernels[0].args[3]);
-    err |= clSetKernelArg(lbm_context->kernels[0].kernel, 4, sizeof(cl_mem), &lbm_context->kernels[0].args[4]);
-    err |= clSetKernelArg(lbm_context->kernels[0].kernel, 5, sizeof(cl_mem), &lbm_context->kernels[0].args[5]);
+    for(i = 1; i < NUM_ARGS; i++)
+    {
+      err  |= clSetKernelArg(lbm_context->kernels[0].kernel, i, sizeof(cl_mem), &lbm_context->kernels[0].args[i]);
+    }
+    if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel args", err);
 
     //__kernel void test(__global const int* shared_read_only_small, __global int* shared_read_write_1, __global int* shared_read_write_2, __global int* single_output)
     //array length = 65536 = (256^2)
-
 /*
-    #define PROBLEM_SIZE 10//65536
+
+    #define PROBLEM_SIZE 65536
     int h_shared_read_only_small[3] = {1, 2, 3};
     int h_shared_read_write_1[PROBLEM_SIZE];
     int h_shared_read_write_2[PROBLEM_SIZE];
@@ -339,9 +339,9 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     err |= clSetKernelArg(lbm_context->kernels[0].kernel, 3, sizeof(cl_mem), &lbm_context->kernels[0].args[3]);
     err |= clSetKernelArg(lbm_context->kernels[0].kernel, 4, sizeof(cl_mem), &lbm_context->kernels[0].args[4]);
 
-    #define NUM_DIMENSIONS 1
-    size_t global_work_size[NUM_DIMENSIONS] = {PROBLEM_SIZE}; //total problem size
-    size_t local_work_size[NUM_DIMENSIONS]  = {1}; //per work-item size
+    #define NUM_DIMENSIONS 2
+    size_t global_work_size[NUM_DIMENSIONS] = {256,256}; //total problem size
+    size_t local_work_size[NUM_DIMENSIONS]  = {32, 32}; //per work-item size
 
     err = clEnqueueNDRangeKernel(lbm_context->queue, lbm_context->kernels[0].kernel, NUM_DIMENSIONS, NULL,
                         global_work_size, local_work_size,0,NULL,NULL);
@@ -365,7 +365,6 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     printf("\n");
     if(err) printf("Error\n");
 */
-    if (CL_SUCCESS != err) DIE("OpenCL error %d creating kernel", err);
 
     fprintf(stdout, "Finished initialising OpenCL\n");
 }

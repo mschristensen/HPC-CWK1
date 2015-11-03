@@ -43,6 +43,7 @@ typedef struct {
     cl_device_id device;
     cl_command_queue queue;
     lbm_kernel_t* kernels;    //array of kernels
+    cl_program program;
 } lbm_context_t;
 
 /* struct to hold the 'speed' values */
@@ -82,7 +83,8 @@ float timestep(const param_t params, const accel_area_t accel_area,
 void accelerate_flow(const param_t params, const accel_area_t accel_area,
     speed_t* cells, char* obstacles);
 float d2q9bgk(const param_t params, speed_t* cells, speed_t* tmp_cells, speed_t* tmp_tmp_cells, char* obstacles);
-
+void setArgs(lbm_context_t lbm_context,
+    speed_t* cells, speed_t* tmp_cells, speed_t* tmp_tmp_cells, int GRID_SIZE);
 /* Sum all the densities in the grid.
 ** The total should remain constant from one timestep to the next. */
 float total_density(const param_t params, speed_t* cells);

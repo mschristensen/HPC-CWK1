@@ -104,8 +104,30 @@ int main(int argc, char* argv[])
 
     for (ii = 0; ii < params.max_iters; ii++)
     {
+        printf("CELLS BEFORE @ (50,50) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n",
+              cells[50*params.nx + 50].speeds[0],
+              cells[50*params.nx + 50].speeds[1],
+              cells[50*params.nx + 50].speeds[2],
+              cells[50*params.nx + 50].speeds[3],
+              cells[50*params.nx + 50].speeds[4],
+              cells[50*params.nx + 50].speeds[5],
+              cells[50*params.nx + 50].speeds[6],
+              cells[50*params.nx + 50].speeds[7],
+              cells[50*params.nx + 50].speeds[8]);
         av_vels[ii] = timestep(params, accel_area, lbm_context, cells, tmp_cells, tmp_tmp_cells, obstacles);
         swap(&cells, &tmp_tmp_cells);
+        printf("CELLS AFTER @ (50,50) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n",
+              cells[50*params.nx + 50].speeds[0],
+              cells[50*params.nx + 50].speeds[1],
+              cells[50*params.nx + 50].speeds[2],
+              cells[50*params.nx + 50].speeds[3],
+              cells[50*params.nx + 50].speeds[4],
+              cells[50*params.nx + 50].speeds[5],
+              cells[50*params.nx + 50].speeds[6],
+              cells[50*params.nx + 50].speeds[7],
+              cells[50*params.nx + 50].speeds[8]);
+
+        //if(ii == 200) break;
 
         #ifdef DEBUG
         printf("==timestep: %d==\n", ii);
