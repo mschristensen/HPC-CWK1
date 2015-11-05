@@ -230,7 +230,7 @@ __kernel void av_velocity(const param_t params, __global speed_t* cells, __globa
     }
 }
 
-__kernel d2q9bgk(const param_t params, __global speed_t* cells, __global speed_t* tmp_cells, __global speed_t* tmp_tmp_cells, __global char* obstacles, __global float* tot_u)
+__kernel void d2q9bgk(const param_t params, __global speed_t* cells, __global speed_t* tmp_cells, __global speed_t* tmp_tmp_cells, __global char* obstacles, __global float* tot_u)
 {
   int ii,jj,kk;                /* generic counters */
   int x_e,x_w,y_n,y_s;         /* indices of neighbouring cells */
