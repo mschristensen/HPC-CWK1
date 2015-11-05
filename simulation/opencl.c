@@ -265,7 +265,7 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     cl_mem d_tmp_cells      = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(speed_t) * GRID_SIZE, tmp_cells,    NULL);
     cl_mem d_tmp_tmp_cells  = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(speed_t) * GRID_SIZE, tmp_tmp_cells,NULL);
     cl_mem d_obstacles      = clCreateBuffer(lbm_context->context, CL_MEM_READ_ONLY  | CL_MEM_COPY_HOST_PTR, sizeof(char)    * GRID_SIZE, obstacles,    NULL);
-    cl_mem d_tot_u          = clCreateBuffer(lbm_context->context, CL_MEM_WRITE_ONLY,                        sizeof(cl_float)* GRID_SIZE, tot_u,        NULL);
+    cl_mem d_tot_u          = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(cl_float)* GRID_SIZE, tot_u,        NULL);
     cl_mem d_tot_cells      = clCreateBuffer(lbm_context->context, CL_MEM_WRITE_ONLY,                        sizeof(cl_int)  * GRID_SIZE, tot_cells,    NULL);
 
     // create the kernel for the defined d2q9bgk function (kernels.cl)
@@ -273,7 +273,7 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     #define NUM_ARGS 7
     lbm_context->kernels = malloc(sizeof(lbm_kernel_t) * KERNEL_NUM);
     lbm_context->kernels[0].kernel = clCreateKernel(lbm_context->program, "d2q9bgk", &err);
-    if (CL_SUCCESS != err) DIE("OpenCL error %d creating kernel", err);
+    if (CL_SUCCESS != err) DIE("OpenCL error %d creating kernel1", err);
 
     // allocate memory for the kernel args
     lbm_context->kernels[0].args = malloc(sizeof(cl_mem) * NUM_ARGS);

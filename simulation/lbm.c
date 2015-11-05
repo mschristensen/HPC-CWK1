@@ -58,11 +58,11 @@
 
 /* Function to swap two arrays (by exchanging the pointers), as per
 ** http://stackoverflow.com/questions/13246615/swap-two-pointers-to-exchange-arrays */
-void swap(speed_t** one, speed_t** two){
+/*void swap(speed_t** one, speed_t** two){
   speed_t* temp = *one;
   *one = *two;
   *two = temp;
-}
+}*/
 
 /*
 ** main program:
@@ -101,33 +101,76 @@ int main(int argc, char* argv[])
     /* iterate for max_iters timesteps */
     gettimeofday(&timstr,NULL);
     tic=timstr.tv_sec+(timstr.tv_usec/1000000.0);
-
+/*
+    int m, n, y_n, x_e, y_s, x_w,jj,index;
+    y_n = (ii + 1) % params.ny;
+    x_e = (jj + 1) % params.nx;
+    y_s = (ii == 0) ? (ii + params.ny - 1) : (ii - 1);
+    x_w = (jj == 0) ? (jj + params.nx - 1) : (jj - 1);
+    ii=300;jj=300;index=ii*params.nx+jj;
+    printf("AFTER  {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n\n",
+    cells[index].speeds[0],
+    cells[ii *params.nx + x_w].speeds[1],
+    cells[y_s*params.nx + jj].speeds[2] ,
+    cells[ii *params.nx + x_e].speeds[3],
+    cells[y_n*params.nx + jj].speeds[4] ,
+    cells[y_s*params.nx + x_w].speeds[5],
+    cells[y_s*params.nx + x_e].speeds[6],
+    cells[y_n*params.nx + x_e].speeds[7],
+    cells[y_n*params.nx + x_w].speeds[8]);
+  */
     for (ii = 0; ii < params.max_iters; ii++)
     {
-        printf("CELLS BEFORE @ (50,50) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n",
-              cells[50*params.nx + 50].speeds[0],
-              cells[50*params.nx + 50].speeds[1],
-              cells[50*params.nx + 50].speeds[2],
-              cells[50*params.nx + 50].speeds[3],
-              cells[50*params.nx + 50].speeds[4],
-              cells[50*params.nx + 50].speeds[5],
-              cells[50*params.nx + 50].speeds[6],
-              cells[50*params.nx + 50].speeds[7],
-              cells[50*params.nx + 50].speeds[8]);
-        av_vels[ii] = timestep(params, accel_area, lbm_context, cells, tmp_cells, tmp_tmp_cells, obstacles);
-        swap(&cells, &tmp_tmp_cells);
-        printf("CELLS AFTER @ (50,50) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n",
-              cells[50*params.nx + 50].speeds[0],
-              cells[50*params.nx + 50].speeds[1],
-              cells[50*params.nx + 50].speeds[2],
-              cells[50*params.nx + 50].speeds[3],
-              cells[50*params.nx + 50].speeds[4],
-              cells[50*params.nx + 50].speeds[5],
-              cells[50*params.nx + 50].speeds[6],
-              cells[50*params.nx + 50].speeds[7],
-              cells[50*params.nx + 50].speeds[8]);
+      printf("JUST BEFORE TIMESTEP\n");
+      int print_cell_index = 50;
+      printf("CELLS  @ (%d) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n", print_cell_index,
+            cells[print_cell_index*params.nx + print_cell_index].speeds[0],
+            cells[print_cell_index*params.nx + print_cell_index].speeds[1],
+            cells[print_cell_index*params.nx + print_cell_index].speeds[2],
+            cells[print_cell_index*params.nx + print_cell_index].speeds[3],
+            cells[print_cell_index*params.nx + print_cell_index].speeds[4],
+            cells[print_cell_index*params.nx + print_cell_index].speeds[5],
+            cells[print_cell_index*params.nx + print_cell_index].speeds[6],
+            cells[print_cell_index*params.nx + print_cell_index].speeds[7],
+            cells[print_cell_index*params.nx + print_cell_index].speeds[8]);
+      printf("TTCELLS@ (%d) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n", print_cell_index,
+            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[0],
+            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[1],
+            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[2],
+            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[3],
+            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[4],
+            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[5],
+            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[6],
+            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[7],
+            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[8]);
 
-        //if(ii == 200) break;
+
+        av_vels[ii] = timestep(params, accel_area, &lbm_context, &cells, &tmp_cells, &tmp_tmp_cells, obstacles);
+        //if(ii == 2) break;
+
+        printf("JUST AFTER TIMESTEP\n");
+        printf("CELLS  @ (%d) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n", print_cell_index,
+              cells[print_cell_index*params.nx + print_cell_index].speeds[0],
+              cells[print_cell_index*params.nx + print_cell_index].speeds[1],
+              cells[print_cell_index*params.nx + print_cell_index].speeds[2],
+              cells[print_cell_index*params.nx + print_cell_index].speeds[3],
+              cells[print_cell_index*params.nx + print_cell_index].speeds[4],
+              cells[print_cell_index*params.nx + print_cell_index].speeds[5],
+              cells[print_cell_index*params.nx + print_cell_index].speeds[6],
+              cells[print_cell_index*params.nx + print_cell_index].speeds[7],
+              cells[print_cell_index*params.nx + print_cell_index].speeds[8]);
+        printf("TTCELLS@ (%d) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n", print_cell_index,
+              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[0],
+              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[1],
+              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[2],
+              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[3],
+              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[4],
+              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[5],
+              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[6],
+              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[7],
+              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[8]);
+        //swap(&cells, &tmp_tmp_cells);
+        //if(ii == 2000) break;
 
         #ifdef DEBUG
         printf("==timestep: %d==\n", ii);

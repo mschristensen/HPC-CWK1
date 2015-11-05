@@ -59,8 +59,7 @@ __kernel void test(__global const int* shared_read_only_small, __global int* sha
 
 
  /* This function is the result of a merge between propagate, rebound, collision and av_velocity.
- ** Please refer to the report.
- ** Code is deliberately non-DRY because not encapsulating the loop body in a function yields a performance increase. */
+ ** Please refer to the report.*/
  __kernel void d2q9bgk(__global const param_t* params, __global speed_t* cells, __global speed_t* tmp_cells, __global speed_t* tmp_tmp_cells, __global char* obstacles, __global float* tot_u, __global int* tot_cells)
  {
      int ii,jj,kk;                /* generic counters */
@@ -110,7 +109,8 @@ __kernel void test(__global const int* shared_read_only_small, __global int* sha
      /* if the cell contains an obstacle */
      if (obstacles[index])
      {
-         /* REBOUND STEP */
+         // REBOUND STEP
+
          tmp_tmp_cells[index].speeds[1] = tmp_cells[index].speeds[3];
          tmp_tmp_cells[index].speeds[2] = tmp_cells[index].speeds[4];
          tmp_tmp_cells[index].speeds[3] = tmp_cells[index].speeds[1];
@@ -121,10 +121,11 @@ __kernel void test(__global const int* shared_read_only_small, __global int* sha
          tmp_tmp_cells[index].speeds[8] = tmp_cells[index].speeds[6];
 
          tot_u[index] = -1.0;
-         tot_cells[index] = 0;
+         //tot_cells[index] = 0;
      } else {
-         /* COLLISION STEP */
-         /* compute local density total */
+         // COLLISION STEP
+         // compute local density total
+
          local_density = 0.0;
 
          for (kk = 0; kk < NSPEEDS; kk++)
@@ -132,7 +133,7 @@ __kernel void test(__global const int* shared_read_only_small, __global int* sha
              local_density += tmp_cells[index].speeds[kk];
          }
 
-         /* compute x velocity component */
+         // compute x velocity component
          u_x = (tmp_cells[index].speeds[1] +
                  tmp_cells[index].speeds[5] +
                  tmp_cells[index].speeds[8]
@@ -141,7 +142,7 @@ __kernel void test(__global const int* shared_read_only_small, __global int* sha
                  tmp_cells[index].speeds[7]))
              / local_density;
 
-         /* compute y velocity component */
+         // compute y velocity component
          u_y = (tmp_cells[index].speeds[2] +
                  tmp_cells[index].speeds[5] +
                  tmp_cells[index].speeds[6]
@@ -150,23 +151,23 @@ __kernel void test(__global const int* shared_read_only_small, __global int* sha
                  tmp_cells[index].speeds[8]))
              / local_density;
 
-         /* velocity squared */
+         // velocity squared
          u_sq = u_x * u_x + u_y * u_y;
 
-         /* directional velocity components */
-         u[1] =   u_x;        /* east */
-         u[2] =         u_y;  /* north */
-         u[3] = - u_x;        /* west */
-         u[4] =       - u_y;  /* south */
-         u[5] =   u_x + u_y;  /* north-east */
-         u[6] = - u_x + u_y;  /* north-west */
-         u[7] = - u_x - u_y;  /* south-west */
-         u[8] =   u_x - u_y;  /* south-east */
+         // directional velocity components
+         u[1] =   u_x;        // east
+         u[2] =         u_y;  // north
+         u[3] = - u_x;        // west
+         u[4] =       - u_y;  // south
+         u[5] =   u_x + u_y;  // north-east
+         u[6] = - u_x + u_y;  // north-west
+         u[7] = - u_x - u_y;  // south-west
+         u[8] =   u_x - u_y;  // south-east
 
-         /* equilibrium densities */
-         /* zero velocity density: weight w0 */
+         // equilibrium densities
+         // zero velocity density: weight w0
          d_equ[0] = w0 * local_density * (1.0 - u_sq / (2.0 * c_sq));
-         /* axis speeds: weight w1 */
+         // axis speeds: weight w1
          d_equ[1] = w1 * local_density * (1.0 + u[1] / c_sq
              + (u[1] * u[1]) / (2.0 * c_sq * c_sq)
              - u_sq / (2.0 * c_sq));
@@ -179,7 +180,7 @@ __kernel void test(__global const int* shared_read_only_small, __global int* sha
          d_equ[4] = w1 * local_density * (1.0 + u[4] / c_sq
              + (u[4] * u[4]) / (2.0 * c_sq * c_sq)
              - u_sq / (2.0 * c_sq));
-         /* diagonal speeds: weight w2 */
+         // diagonal speeds: weight w2
          d_equ[5] = w2 * local_density * (1.0 + u[5] / c_sq
              + (u[5] * u[5]) / (2.0 * c_sq * c_sq)
              - u_sq / (2.0 * c_sq));
@@ -194,20 +195,20 @@ __kernel void test(__global const int* shared_read_only_small, __global int* sha
              - u_sq / (2.0 * c_sq));
 
 
-         /* local density total */
+         // local density total
          local_density = 0.0;
          for (kk = 0; kk < NSPEEDS; kk++)
          {
-             /* relaxation step (part of COLLISION STEP) */
+             // relaxation step (part of COLLISION STEP)
              tmp_tmp_cells[index].speeds[kk] =
                  (tmp_cells[index].speeds[kk] + params->omega *
                  (d_equ[kk] - tmp_cells[index].speeds[kk]));
 
-             /* AV_VELS STEP */
+             // AV_VELS STEP
              local_density += tmp_tmp_cells[index].speeds[kk];
          }
 
-         /* x-component of velocity */
+         // x-component of velocity
          u_x = (tmp_tmp_cells[index].speeds[1] +
                  tmp_tmp_cells[index].speeds[5] +
                  tmp_tmp_cells[index].speeds[8]
@@ -216,7 +217,7 @@ __kernel void test(__global const int* shared_read_only_small, __global int* sha
                  tmp_tmp_cells[index].speeds[7])) /
              local_density;
 
-         /* compute y velocity component */
+         // compute y velocity component
          u_y = (tmp_tmp_cells[index].speeds[2] +
                  tmp_tmp_cells[index].speeds[5] +
                  tmp_tmp_cells[index].speeds[6]
@@ -225,9 +226,10 @@ __kernel void test(__global const int* shared_read_only_small, __global int* sha
                  tmp_tmp_cells[index].speeds[8])) /
              local_density;
 
-         /* accumulate the norm of x- and y- velocity components */
+         // accumulate the norm of x- and y- velocity components
          tot_u[index] = sqrt(u_x*u_x + u_y*u_y);
-         /* increase counter of inspected cells */
-         tot_cells[index] = 1;
+
+         // increase counter of inspected cells
+         //tot_cells[index] = 1;
      }
- }
+}
