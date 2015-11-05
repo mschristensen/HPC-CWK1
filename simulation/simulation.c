@@ -109,7 +109,7 @@ float timestep(const param_t params, const accel_area_t accel_area,
                               sizeof(speed_t) * GRID_SIZE, tmp_cells,
                               0, NULL, NULL);
     if (CL_SUCCESS != err) DIE("OpenCL error reading back tmp_cell arrays %d!\n", err);
-
+/*
     // OPENCL COLLISION ---------------------------------------------------------------------
     setArgs(lbm_context, cells, tmp_cells, tmp_tmp_cells, GRID_SIZE, 2);
     err = clEnqueueNDRangeKernel(lbm_context->queue, lbm_context->kernels[2].kernel,
@@ -127,7 +127,7 @@ float timestep(const param_t params, const accel_area_t accel_area,
                               sizeof(speed_t) * GRID_SIZE, tmp_cells,
                               0, NULL, NULL);
     if (CL_SUCCESS != err) DIE("OpenCL error reading back tmp_cell arrays %d!\n", err);
-
+*/
     // OPENCL AV_VELOCITY ---------------------------------------------------------------------
     setArgs(lbm_context, cells, tmp_cells, tmp_tmp_cells, GRID_SIZE, 3);
     err = clEnqueueNDRangeKernel(lbm_context->queue, lbm_context->kernels[3].kernel,
