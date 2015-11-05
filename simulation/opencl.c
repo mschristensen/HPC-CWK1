@@ -287,16 +287,12 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel args", err);
 */
 
-    #define KERNEL_NUM 4
+    #define KERNEL_NUM 2
     lbm_context->kernels = malloc(sizeof(lbm_kernel_t) * KERNEL_NUM);
     lbm_context->kernels[0].kernel = clCreateKernel(lbm_context->program, "propagate", &err);
     if (CL_SUCCESS != err) DIE("OpenCL error %d creating kernel 0", err);
-    lbm_context->kernels[1].kernel = clCreateKernel(lbm_context->program, "rebound", &err);
+    lbm_context->kernels[1].kernel = clCreateKernel(lbm_context->program, "rebound_collision_av_vels", &err);
     if (CL_SUCCESS != err) DIE("OpenCL error %d creating kernel 1", err);
-    lbm_context->kernels[2].kernel = clCreateKernel(lbm_context->program, "collision", &err);
-    if (CL_SUCCESS != err) DIE("OpenCL error %d creating kernel 2", err);
-    lbm_context->kernels[3].kernel = clCreateKernel(lbm_context->program, "av_velocity", &err);
-    if (CL_SUCCESS != err) DIE("OpenCL error %d creating kernel 3", err);
 
     // allocate memory for the kernel 0 args
     lbm_context->kernels[0].args = malloc(sizeof(cl_mem) * 2);
@@ -304,22 +300,11 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     lbm_context->kernels[0].args[1] = d_tmp_cells;
 
     // allocate memory for the kernel 1 args
-    lbm_context->kernels[1].args = malloc(sizeof(cl_mem) * 3);
+    lbm_context->kernels[1].args = malloc(sizeof(cl_mem) * 4);
     lbm_context->kernels[1].args[0] = d_cells;
     lbm_context->kernels[1].args[1] = d_tmp_cells;
     lbm_context->kernels[1].args[2] = d_obstacles;
-
-    // allocate memory for the kernel 2 args
-    lbm_context->kernels[2].args = malloc(sizeof(cl_mem) * 3);
-    lbm_context->kernels[2].args[0] = d_cells;
-    lbm_context->kernels[2].args[1] = d_tmp_cells;
-    lbm_context->kernels[2].args[2] = d_obstacles;
-
-    // allocate memory for the kernel 3 args
-    lbm_context->kernels[3].args = malloc(sizeof(cl_mem) * 3);
-    lbm_context->kernels[3].args[0] = d_cells;
-    lbm_context->kernels[3].args[1] = d_obstacles;
-    lbm_context->kernels[3].args[2] = d_tot_u;
+    lbm_context->kernels[1].args[3] = d_tot_u;
 
     // set kernel 0 args
     err   = clSetKernelArg(lbm_context->kernels[0].kernel, 0, sizeof(param_t), &params);
@@ -332,22 +317,8 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 1, sizeof(cl_mem), &lbm_context->kernels[1].args[0]);
     err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 2, sizeof(cl_mem), &lbm_context->kernels[1].args[1]);
     err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 3, sizeof(cl_mem), &lbm_context->kernels[1].args[2]);
+    err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 4, sizeof(cl_mem), &lbm_context->kernels[1].args[3]);
     if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel 1 args", err);
-
-    // set kernel 2 args
-    err   = clSetKernelArg(lbm_context->kernels[2].kernel, 0, sizeof(param_t), &params);
-    err  |= clSetKernelArg(lbm_context->kernels[2].kernel, 1, sizeof(cl_mem), &lbm_context->kernels[2].args[0]);
-    err  |= clSetKernelArg(lbm_context->kernels[2].kernel, 2, sizeof(cl_mem), &lbm_context->kernels[2].args[1]);
-    err  |= clSetKernelArg(lbm_context->kernels[2].kernel, 3, sizeof(cl_mem), &lbm_context->kernels[2].args[2]);
-    if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel 2 args", err);
-
-    // set kernel 3 args
-    err   = clSetKernelArg(lbm_context->kernels[3].kernel, 0, sizeof(param_t), &params);
-    err  |= clSetKernelArg(lbm_context->kernels[3].kernel, 1, sizeof(cl_mem), &lbm_context->kernels[3].args[0]);
-    err  |= clSetKernelArg(lbm_context->kernels[3].kernel, 2, sizeof(cl_mem), &lbm_context->kernels[3].args[1]);
-    err  |= clSetKernelArg(lbm_context->kernels[3].kernel, 3, sizeof(cl_mem), &lbm_context->kernels[3].args[2]);
-    if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel 3 args", err);
-    
 
     fprintf(stdout, "Finished initialising OpenCL\n");
 }
