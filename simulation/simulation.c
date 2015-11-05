@@ -21,6 +21,35 @@ float timestep(const param_t params, const accel_area_t accel_area,
 
     accelerate_flow(params,accel_area,cells,obstacles);
 
+    // set work-item problem dimensions
+    #define NUM_DIMENSIONS 2
+    size_t global_work_size[NUM_DIMENSIONS] = {params.nx, params.ny};   //total problem size
+    size_t local_work_size[NUM_DIMENSIONS]  = {32,32};                  //work-group size
+
+    cl_int err;
+    setArgs(lbm_context, cells, tmp_cells, tmp_tmp_cells, GRID_SIZE);
+    err = clEnqueueNDRangeKernel(lbm_context->queue, lbm_context->kernels[0].kernel,
+                                 NUM_DIMENSIONS, NULL,
+                                 global_work_size, local_work_size, 0, NULL, NULL);
+    if (CL_SUCCESS != err) DIE("OpenCL enqueue kernel error %d!\n", err);
+
+    err  = clEnqueueReadBuffer(lbm_context->queue, lbm_context->kernels[0].args[0],
+                              CL_TRUE, 0,
+                              sizeof(speed_t) * GRID_SIZE, cells,
+                              0, NULL, NULL);
+    if (CL_SUCCESS != err) DIE("OpenCL error reading back cell arrays %d!\n", err);
+    err = clEnqueueReadBuffer(lbm_context->queue, lbm_context->kernels[0].args[1],
+                              CL_TRUE, 0,
+                              sizeof(speed_t) * GRID_SIZE, tmp_cells,
+                              0, NULL, NULL);
+    if (CL_SUCCESS != err) DIE("OpenCL error reading back tmp_cell arrays %d!\n", err);
+    err = clEnqueueReadBuffer(lbm_context->queue, lbm_context->kernels[0].args[2],
+                              CL_TRUE, 0,
+                              sizeof(speed_t) * GRID_SIZE, tmp_tmp_cells,
+                              0, NULL, NULL);
+    if (CL_SUCCESS != err) DIE("OpenCL error reading back tmp_tmp_cell arrays %d!\n", err);
+
+    /*
     // OPENCL PROPAGATE ---------------------------------------------------------------------
     // set work-item problem dimensions
     #define NUM_DIMENSIONS 2
@@ -100,6 +129,7 @@ float timestep(const param_t params, const accel_area_t accel_area,
                               sizeof(cl_float) * GRID_SIZE, tot_u,
                               0, NULL, NULL);
     if (CL_SUCCESS != err) DIE("OpenCL error reading back tot_u array %d!\n", err);
+    */
 
     int ii, jj, index;
     float tot_u_out = 0.0;
@@ -120,27 +150,27 @@ float timestep(const param_t params, const accel_area_t accel_area,
 }
 
 void setArgs(lbm_context_t* lbm_context,
-    speed_t* cells, speed_t* tmp_cells, speed_t* tmp_tmp_cells, int GRID_SIZE, int KERNEL)
+    speed_t* cells, speed_t* tmp_cells, speed_t* tmp_tmp_cells, int GRID_SIZE)
 {
   cl_int err;
-  err  = clEnqueueWriteBuffer(lbm_context->queue, lbm_context->kernels[KERNEL].args[0],
+  err  = clEnqueueWriteBuffer(lbm_context->queue, lbm_context->kernels[0].args[0],
                              CL_TRUE, 0,
                              sizeof(speed_t) * GRID_SIZE, cells,
                              0, NULL, NULL);
-  if(KERNEL != 3)
-  {
-    err |= clEnqueueWriteBuffer(lbm_context->queue, lbm_context->kernels[KERNEL].args[1],
-                               CL_TRUE, 0,
-                               sizeof(speed_t) * GRID_SIZE, tmp_cells,
-                               0, NULL, NULL);
-    if (CL_SUCCESS != err) DIE("OpenCL error writing to buffers %d!\n", err);
-  }
+  err |= clEnqueueWriteBuffer(lbm_context->queue, lbm_context->kernels[0].args[1],
+                             CL_TRUE, 0,
+                             sizeof(speed_t) * GRID_SIZE, tmp_cells,
+                             0, NULL, NULL);
+  err |= clEnqueueWriteBuffer(lbm_context->queue, lbm_context->kernels[0].args[2],
+                             CL_TRUE, 0,
+                             sizeof(speed_t) * GRID_SIZE, tmp_tmp_cells,
+                             0, NULL, NULL);
+  if (CL_SUCCESS != err) DIE("OpenCL error writing to buffers %d!\n", err);
+
   // set the kernel args
-  err  = clSetKernelArg(lbm_context->kernels[KERNEL].kernel, 1, sizeof(cl_mem), &(lbm_context->kernels[KERNEL].args[0]));
-  if(KERNEL != 3)
-  {
-    err |= clSetKernelArg(lbm_context->kernels[KERNEL].kernel, 2, sizeof(cl_mem), &(lbm_context->kernels[KERNEL].args[1]));
-  }
+  err  = clSetKernelArg(lbm_context->kernels[0].kernel, 1, sizeof(cl_mem), &(lbm_context->kernels[0].args[0]));
+  err |= clSetKernelArg(lbm_context->kernels[0].kernel, 2, sizeof(cl_mem), &(lbm_context->kernels[0].args[1]));
+  err |= clSetKernelArg(lbm_context->kernels[0].kernel, 3, sizeof(cl_mem), &(lbm_context->kernels[0].args[2]));
   if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel args", err);
 }
 
