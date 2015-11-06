@@ -259,34 +259,45 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     printf("GRID SIZE = %d\n", GRID_SIZE);
 
     cl_mem d_cells          = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(speed_t) * GRID_SIZE, cells,     NULL);
-    cl_mem d_tmp_cells      = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE,                        sizeof(speed_t) * GRID_SIZE, NULL,      NULL);
-    cl_mem d_tmp_tmp_cells  = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE,                        sizeof(speed_t) * GRID_SIZE, NULL,      NULL);
     cl_mem d_obstacles      = clCreateBuffer(lbm_context->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,  sizeof(speed_t) * GRID_SIZE, obstacles, NULL);
     cl_mem d_tot_u          = clCreateBuffer(lbm_context->context, CL_MEM_WRITE_ONLY,                        sizeof(cl_float) * GRID_SIZE,NULL,      NULL);
-/*
-    #define KERNEL_NUM 1
+
+    #define KERNEL_NUM 2
     lbm_context->kernels = malloc(sizeof(lbm_kernel_t) * KERNEL_NUM);
-    lbm_context->kernels[0].kernel = clCreateKernel(lbm_context->program, "d2q9bgk", &err);
+    lbm_context->kernels[0].kernel = clCreateKernel(lbm_context->program, "beta", &err);
     if (CL_SUCCESS != err) DIE("OpenCL error %d creating kernel 0", err);
+    lbm_context->kernels[1].kernel = clCreateKernel(lbm_context->program, "alpha", &err);
+    if (CL_SUCCESS != err) DIE("OpenCL error %d creating kernel 1", err);
 
-    // allocate memory for the kernel args
-    lbm_context->kernels[0].args = malloc(sizeof(cl_mem) * 5);
+    // allocate memory for the kernel 0 args
+    lbm_context->kernels[0].args = malloc(sizeof(cl_mem) * 3);
     lbm_context->kernels[0].args[0] = d_cells;
-    lbm_context->kernels[0].args[1] = d_tmp_cells;
-    lbm_context->kernels[0].args[2] = d_tmp_tmp_cells;
-    lbm_context->kernels[0].args[3] = d_obstacles;
-    lbm_context->kernels[0].args[4] = d_tot_u;
+    lbm_context->kernels[0].args[1] = d_obstacles;
+    lbm_context->kernels[0].args[2] = d_tot_u;
 
-    // set kernel args
+    // allocate memory for the kernel 1 args
+    lbm_context->kernels[1].args = malloc(sizeof(cl_mem) * 3);
+    lbm_context->kernels[1].args[0] = d_cells;
+    lbm_context->kernels[1].args[1] = d_obstacles;
+    lbm_context->kernels[1].args[2] = d_tot_u;
+
+    // set kernel 0 args
     err   = clSetKernelArg(lbm_context->kernels[0].kernel, 0, sizeof(param_t), &params);
     err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 1, sizeof(cl_mem), &lbm_context->kernels[0].args[0]);
     err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 2, sizeof(cl_mem), &lbm_context->kernels[0].args[1]);
     err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 3, sizeof(cl_mem), &lbm_context->kernels[0].args[2]);
-    err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 4, sizeof(cl_mem), &lbm_context->kernels[0].args[3]);
-    err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 5, sizeof(cl_mem), &lbm_context->kernels[0].args[4]);
-    if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel args", err);
-*/
+    err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 4, sizeof(accel_area_t), &accel_area);
+    if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel 0 args", err);
 
+    // set kernel 1 args
+    err   = clSetKernelArg(lbm_context->kernels[1].kernel, 0, sizeof(param_t), &params);
+    err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 1, sizeof(cl_mem), &lbm_context->kernels[1].args[0]);
+    err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 2, sizeof(cl_mem), &lbm_context->kernels[1].args[1]);
+    err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 3, sizeof(cl_mem), &lbm_context->kernels[1].args[2]);
+    err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 4, sizeof(accel_area_t), &accel_area);
+    if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel 1 args", err);
+
+  /*
     #define KERNEL_NUM 2
     lbm_context->kernels = malloc(sizeof(lbm_kernel_t) * KERNEL_NUM);
     lbm_context->kernels[0].kernel = clCreateKernel(lbm_context->program, "propagate", &err);
@@ -320,6 +331,7 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 4, sizeof(cl_mem), &lbm_context->kernels[1].args[3]);
     err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 5, sizeof(accel_area_t), &accel_area);
     if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel 1 args", err);
+    */
 
     fprintf(stdout, "Finished initialising OpenCL\n");
 }

@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
     cells[y_n*params.nx + x_w].speeds[8]);
   */
     for (ii = 0; ii < params.max_iters; ii++)
-    {/*
+    {
       printf("JUST BEFORE TIMESTEP\n");
       int print_cell_index = 50;
       printf("CELLS  @ (%d) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n", print_cell_index,
@@ -133,24 +133,14 @@ int main(int argc, char* argv[])
             cells[print_cell_index*params.nx + print_cell_index].speeds[6],
             cells[print_cell_index*params.nx + print_cell_index].speeds[7],
             cells[print_cell_index*params.nx + print_cell_index].speeds[8]);
-      printf("TTCELLS@ (%d) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n", print_cell_index,
-            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[0],
-            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[1],
-            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[2],
-            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[3],
-            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[4],
-            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[5],
-            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[6],
-            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[7],
-            tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[8]);*/
 
         if(ii == 0)
         {
           accelerate_flow(params,accel_area,cells,obstacles);
         }
-        av_vels[ii] = timestep(params, accel_area, &lbm_context, &cells, &tmp_cells, &tmp_tmp_cells, obstacles);
+        av_vels[ii] = timestep(params, accel_area, &lbm_context, &cells, obstacles, ii);
         //if(ii == 2) break;
-/*
+
         printf("JUST AFTER TIMESTEP\n");
         printf("CELLS  @ (%d) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n", print_cell_index,
               cells[print_cell_index*params.nx + print_cell_index].speeds[0],
@@ -162,16 +152,6 @@ int main(int argc, char* argv[])
               cells[print_cell_index*params.nx + print_cell_index].speeds[6],
               cells[print_cell_index*params.nx + print_cell_index].speeds[7],
               cells[print_cell_index*params.nx + print_cell_index].speeds[8]);
-        printf("TTCELLS@ (%d) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n", print_cell_index,
-              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[0],
-              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[1],
-              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[2],
-              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[3],
-              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[4],
-              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[5],
-              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[6],
-              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[7],
-              tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[8]);*/
         //swap(&cells, &tmp_tmp_cells);
         //if(ii == 2000) break;
 
