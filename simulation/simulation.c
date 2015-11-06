@@ -130,9 +130,11 @@ float timestep(const param_t params, const accel_area_t accel_area,
         {
           tot_u_out += tot_u[index];
           tot_cells++;
+          //printf("%f\n", tot_u[index]);
         }
       }
     }
+    printf("%f\n", tot_u_out / (float)tot_cells);
     return tot_u_out / (float)tot_cells;
 }
 

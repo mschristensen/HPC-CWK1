@@ -177,15 +177,18 @@ __kernel void alpha(const param_t params, __global speed_t* cells, __global char
     tot_u[ii*params.nx + jj] = sqrt(u_x*u_x + u_y*u_y);
   }
 
-  cells[ii*params.nx + jj].speeds[1] = tmp[1];
-  cells[ii*params.nx + jj].speeds[2] = tmp[2];
-  cells[ii*params.nx + jj].speeds[3] = tmp[3];
-  cells[ii*params.nx + jj].speeds[4] = tmp[4];
-  cells[ii*params.nx + jj].speeds[5] = tmp[5];
-  cells[ii*params.nx + jj].speeds[6] = tmp[6];
-  cells[ii*params.nx + jj].speeds[7] = tmp[7];
-  cells[ii*params.nx + jj].speeds[8] = tmp[8];
 
+  //write to opposite in current cell
+  cells[ii*params.nx + jj].speeds[3] = tmp[1];
+  cells[ii*params.nx + jj].speeds[4] = tmp[2];
+  cells[ii*params.nx + jj].speeds[1] = tmp[3];
+  cells[ii*params.nx + jj].speeds[2] = tmp[4];
+  cells[ii*params.nx + jj].speeds[7] = tmp[5];
+  cells[ii*params.nx + jj].speeds[8] = tmp[6];
+  cells[ii*params.nx + jj].speeds[5] = tmp[7];
+  cells[ii*params.nx + jj].speeds[6] = tmp[8];
+
+/*
   // ACCELERATE_FLOW STEP
 
   // compute weighting factors
@@ -202,18 +205,18 @@ __kernel void alpha(const param_t params, __global speed_t* cells, __global char
           // if the cell is not occupied and
           // we don't send a density negative
           if (!obstacles[ii*params.nx + jj] &&
-          (cells[ii*params.nx + jj].speeds[4] - w1) > 0.0 &&
-          (cells[ii*params.nx + jj].speeds[7] - w2) > 0.0 &&
-          (cells[ii*params.nx + jj].speeds[8] - w2) > 0.0 )
+          (tmp[4] - w1) > 0.0 &&
+          (tmp[7] - w2) > 0.0 &&
+          (tmp[8] - w2) > 0.0 )
           {
               // increase 'north-side' densities
-              cells[ii*params.nx + jj].speeds[2] += w1;
-              cells[ii*params.nx + jj].speeds[5] += w2;
-              cells[ii*params.nx + jj].speeds[6] += w2;
+              tmp[2] += w1;
+              tmp[5] += w2;
+              tmp[6] += w2;
               // decrease 'south-side' densities
-              cells[ii*params.nx + jj].speeds[4] -= w1;
-              cells[ii*params.nx + jj].speeds[7] -= w2;
-              cells[ii*params.nx + jj].speeds[8] -= w2;
+              tmp[4] -= w1;
+              tmp[7] -= w2;
+              tmp[8] -= w2;
           }
       //}
     }
@@ -228,22 +231,23 @@ __kernel void alpha(const param_t params, __global speed_t* cells, __global char
           // if the cell is not occupied and
           // we don't send a density negative
           if (!obstacles[ii*params.nx + jj] &&
-          (cells[ii*params.nx + jj].speeds[3] - w1) > 0.0 &&
-          (cells[ii*params.nx + jj].speeds[6] - w2) > 0.0 &&
-          (cells[ii*params.nx + jj].speeds[7] - w2) > 0.0 )
+          (tmp[3] - w1) > 0.0 &&
+          (tmp[6] - w2) > 0.0 &&
+          (tmp[7] - w2) > 0.0 )
           {
               // increase 'east-side' densities
-              cells[ii*params.nx + jj].speeds[1] += w1;
-              cells[ii*params.nx + jj].speeds[5] += w2;
-              cells[ii*params.nx + jj].speeds[8] += w2;
+              tmp[1] += w1;
+              tmp[5] += w2;
+              tmp[8] += w2;
               // decrease 'west-side' densities
-              cells[ii*params.nx + jj].speeds[3] -= w1;
-              cells[ii*params.nx + jj].speeds[6] -= w2;
-              cells[ii*params.nx + jj].speeds[7] -= w2;
+              tmp[3] -= w1;
+              tmp[6] -= w2;
+              tmp[7] -= w2;
           }
       //}
     }
-  }
+  }*/
+
 }
 
 // PROPAGATE-COLLISION-PROPAGATE
@@ -280,15 +284,17 @@ __kernel void beta(const param_t params, __global speed_t* cells, __global char*
   ** Now updates *all* of the speed values in the *current* cell
   ** by *reading* from the neighbouring cells, (to facilitate
   ** the merge with rebound-collision-av_velocity step) */
-  tmp[0] = cells[ii *params.nx + jj].speeds[0];                //central cell
-  tmp[1] = cells[ii *params.nx + x_w].speeds[1];  //east speed from west-side cell
-  tmp[2] = cells[y_s*params.nx + jj].speeds[2];   //north speed from south-side cell
-  tmp[3] = cells[ii *params.nx + x_e].speeds[3];  //west speed from east-side cell
-  tmp[4] = cells[y_n*params.nx + jj].speeds[4];   //south speed from north-side cell
-  tmp[5] = cells[y_s*params.nx + x_w].speeds[5];  //north-east speed from south-west-side cell
-  tmp[6] = cells[y_s*params.nx + x_e].speeds[6];  //north-west speed from south-east-side cell
-  tmp[7] = cells[y_n*params.nx + x_e].speeds[7];  //south-west speed from north-east-side cell
-  tmp[8] = cells[y_n*params.nx + x_w].speeds[8];  //south-east speed from north-west-side cell
+
+  //read from adjacent cell in opposite dir to vec
+  tmp[0] = cells[ii *params.nx + jj].speeds[0];   //central cell
+  tmp[1] = cells[ii *params.nx + x_w].speeds[1];
+  tmp[2] = cells[y_s*params.nx + jj].speeds[2];
+  tmp[3] = cells[ii *params.nx + x_e].speeds[3];
+  tmp[4] = cells[y_n*params.nx + jj].speeds[4];
+  tmp[5] = cells[y_s*params.nx + x_w].speeds[5];
+  tmp[6] = cells[y_s*params.nx + x_e].speeds[6];
+  tmp[7] = cells[y_n*params.nx + x_e].speeds[7];
+  tmp[8] = cells[y_n*params.nx + x_w].speeds[8];
 
 
   /* if the cell contains an obstacle */
@@ -416,9 +422,26 @@ __kernel void beta(const param_t params, __global speed_t* cells, __global char*
     tot_u[ii*params.nx + jj] = sqrt(u_x*u_x + u_y*u_y);
   }
 
+  /* Propagate densities to neighbouring cells, following
+  ** appropriate directions of travel.
+  ** Now updates *all* of the speed values in the *current* cell
+  ** by *reading* from the neighbouring cells, (to facilitate
+  ** the merge with rebound-collision-av_velocity step) */
+  cells[ii *params.nx + jj].speeds[0] = tmp2[0];                //central cell
+  cells[ii *params.nx + x_e].speeds[1] = tmp2[1];
+  cells[y_n *params.nx + jj].speeds[2] = tmp2[2];
+  cells[ii *params.nx + x_w].speeds[3] = tmp2[3];
+  cells[y_s *params.nx + jj].speeds[4] = tmp2[4];
+  cells[y_n *params.nx + x_e].speeds[5] = tmp2[5];
+  cells[y_n *params.nx + x_w].speeds[6] = tmp2[6];
+  cells[y_s *params.nx + x_w].speeds[7] = tmp2[7];
+  cells[y_s *params.nx + x_e].speeds[8] = tmp2[8];
+
+
   // ACCELERATE_FLOW STEP
 
   // compute weighting factors
+/*
   w1 = params.density * params.accel / 9.0;
   w2 = params.density * params.accel / 36.0;
 
@@ -475,21 +498,8 @@ __kernel void beta(const param_t params, __global speed_t* cells, __global char*
       //}
     }
   }
+*/
 
-  /* Propagate densities to neighbouring cells, following
-  ** appropriate directions of travel.
-  ** Now updates *all* of the speed values in the *current* cell
-  ** by *reading* from the neighbouring cells, (to facilitate
-  ** the merge with rebound-collision-av_velocity step) */
-  cells[ii *params.nx + jj].speeds[0] = tmp2[0];                //central cell
-  cells[ii *params.nx + x_w].speeds[1] = tmp2[1];  //east speed from west-side cell
-  cells[y_s*params.nx + jj].speeds[2] = tmp2[2];   //north speed from south-side cell
-  cells[ii *params.nx + x_e].speeds[3] = tmp2[3];  //west speed from east-side cell
-  cells[y_n*params.nx + jj].speeds[4] = tmp2[4];   //south speed from north-side cell
-  cells[y_s*params.nx + x_w].speeds[5] = tmp2[5];  //north-east speed from south-west-side cell
-  cells[y_s*params.nx + x_e].speeds[6] = tmp2[6];  //north-west speed from south-east-side cell
-  cells[y_n*params.nx + x_e].speeds[7] = tmp2[7];  //south-west speed from north-east-side cell
-  cells[y_n*params.nx + x_w].speeds[8] = tmp2[8];  //south-east speed from north-west-side cell
 }
 
 
