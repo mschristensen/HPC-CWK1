@@ -58,11 +58,11 @@
 
 /* Function to swap two arrays (by exchanging the pointers), as per
 ** http://stackoverflow.com/questions/13246615/swap-two-pointers-to-exchange-arrays */
-/*void swap(speed_t** one, speed_t** two){
+void swap(speed_t** one, speed_t** two){
   speed_t* temp = *one;
   *one = *two;
   *two = temp;
-}*/
+}
 
 /*
 ** main program:
@@ -79,7 +79,6 @@ int main(int argc, char* argv[])
     param_t  params;              /* struct to hold parameter values */
     speed_t* cells     = NULL;    /* grid containing fluid densities */
     speed_t* tmp_cells = NULL;    /* scratch space */
-    speed_t* tmp_tmp_cells = NULL;    /* scratch space */
     char*    obstacles = NULL;    /* grid indicating which cells are blocked */
     float*  av_vels   = NULL;    /* a record of the av. velocity computed for each timestep */
 
@@ -95,30 +94,16 @@ int main(int argc, char* argv[])
 
     parse_args(argc, argv, &final_state_file, &av_vels_file, &param_file, &device_id);
 
-    initialise(param_file, &accel_area, &params, &cells, &tmp_cells, &tmp_tmp_cells, &obstacles, &av_vels);
-    opencl_initialise(device_id, params, accel_area, &lbm_context, cells, tmp_cells, tmp_tmp_cells, obstacles);
+    initialise(param_file, &accel_area, &params, &cells, &tmp_cells, &obstacles, &av_vels);
+    opencl_initialise(device_id, params, accel_area, &lbm_context, cells, tmp_cells, obstacles);
+
+    // Need to explicitly call first accelerate_flow
+    accelerate_flow(params,accel_area,cells,obstacles);
 
     /* iterate for max_iters timesteps */
     gettimeofday(&timstr,NULL);
     tic=timstr.tv_sec+(timstr.tv_usec/1000000.0);
-/*
-    int m, n, y_n, x_e, y_s, x_w,jj,index;
-    y_n = (ii + 1) % params.ny;
-    x_e = (jj + 1) % params.nx;
-    y_s = (ii == 0) ? (ii + params.ny - 1) : (ii - 1);
-    x_w = (jj == 0) ? (jj + params.nx - 1) : (jj - 1);
-    ii=300;jj=300;index=ii*params.nx+jj;
-    printf("AFTER  {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n\n",
-    cells[index].speeds[0],
-    cells[ii *params.nx + x_w].speeds[1],
-    cells[y_s*params.nx + jj].speeds[2] ,
-    cells[ii *params.nx + x_e].speeds[3],
-    cells[y_n*params.nx + jj].speeds[4] ,
-    cells[y_s*params.nx + x_w].speeds[5],
-    cells[y_s*params.nx + x_e].speeds[6],
-    cells[y_n*params.nx + x_e].speeds[7],
-    cells[y_n*params.nx + x_w].speeds[8]);
-  */
+
     for (ii = 0; ii < params.max_iters; ii++)
     {/*
       printf("JUST BEFORE TIMESTEP\n");
@@ -144,11 +129,8 @@ int main(int argc, char* argv[])
             tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[7],
             tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[8]);*/
 
-        if(ii == 0)
-        {
-          accelerate_flow(params,accel_area,cells,obstacles);
-        }
-        av_vels[ii] = timestep(params, accel_area, &lbm_context, &cells, &tmp_cells, &tmp_tmp_cells, obstacles);
+        av_vels[ii] = timestep(params, accel_area, &lbm_context, &cells, &tmp_cells, obstacles);
+        swap(&cells, &tmp_cells);
         //if(ii == 2) break;
 /*
         printf("JUST AFTER TIMESTEP\n");
@@ -202,7 +184,7 @@ int main(int argc, char* argv[])
 
     write_values(final_state_file, av_vels_file, params, cells, obstacles, av_vels);
 
-    finalise(&cells, &tmp_cells, &tmp_tmp_cells, &obstacles, &av_vels);
+    finalise(&cells, &tmp_cells, &obstacles, &av_vels);
     opencl_finalise(lbm_context);
 
     return EXIT_SUCCESS;
