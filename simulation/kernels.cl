@@ -58,7 +58,7 @@ __kernel void propagate(const param_t params, __global speed_t* cells, __global 
 }
 
 
-__kernel void rebound_collision_av_vels(const param_t params, __global speed_t* cells, __global speed_t* tmp_cells, __global char* obstacles, __global float* tot_u)
+__kernel void rebound_collision_av_vels(const param_t params, __global speed_t* cells, __global speed_t* tmp_cells, __global char* obstacles, __global float* tot_u, const accel_area_t accel_area)
 {
   int ii,jj,kk;  /* generic counters */
   ii = get_global_id(1);
@@ -66,8 +66,8 @@ __kernel void rebound_collision_av_vels(const param_t params, __global speed_t* 
 
   const float c_sq = 1.0/3.0;  /* square of speed of sound */
   const float w0 = 4.0/9.0;    /* weighting factor */
-  const float w1 = 1.0/9.0;    /* weighting factor */
-  const float w2 = 1.0/36.0;   /* weighting factor */
+  float w1 = 1.0/9.0;    /* weighting factor */
+  float w2 = 1.0/36.0;   /* weighting factor */
 
   float u_x,u_y;               /* av. velocities in x and y directions */
   float u_sq;                  /* squared velocity */
@@ -199,6 +199,72 @@ __kernel void rebound_collision_av_vels(const param_t params, __global speed_t* 
     /* accumulate the norm of x- and y- velocity components */
     tot_u[ii*params.nx + jj] = sqrt(u_x*u_x + u_y*u_y);
   }
+
+  // ACCELERATE_FLOW STEP
+  //TODO: figure out whether this will work in a kernel!
+  //Maybe make your own kernel for ACCELERATE_FLOW and only then try to merge in here
+  //e.g. Even though jj becomes fixed, the block will be executed more than ii=0 to params.ny times,
+  //since there will be many work items with a jj value that ends up getting fixed...
+
+  // compute weighting factors
+  w1 = params.density * params.accel / 9.0;
+  w2 = params.density * params.accel / 36.0;
+
+
+  if (accel_area.col_or_row == ACCEL_COLUMN)
+  {
+    if(jj == accel_area.idx)
+    {
+
+      //for (ii = 0; ii < params.ny; ii++)
+      //{
+          // if the cell is not occupied and
+          // we don't send a density negative
+          if (!obstacles[ii*params.nx + jj] &&
+          (cells[ii*params.nx + jj].speeds[4] - w1) > 0.0 &&
+          (cells[ii*params.nx + jj].speeds[7] - w2) > 0.0 &&
+          (cells[ii*params.nx + jj].speeds[8] - w2) > 0.0 )
+          {
+              // increase 'north-side' densities
+              cells[ii*params.nx + jj].speeds[2] += w1;
+              cells[ii*params.nx + jj].speeds[5] += w2;
+              cells[ii*params.nx + jj].speeds[6] += w2;
+              // decrease 'south-side' densities
+              cells[ii*params.nx + jj].speeds[4] -= w1;
+              cells[ii*params.nx + jj].speeds[7] -= w2;
+              cells[ii*params.nx + jj].speeds[8] -= w2;
+          }
+      //}
+    }
+  }
+  else
+  {
+    if(ii == accel_area.idx)
+    {
+
+      //for (jj = 0; jj < params.nx; jj++)
+      //{
+          // if the cell is not occupied and
+          // we don't send a density negative
+          if (!obstacles[ii*params.nx + jj] &&
+          (cells[ii*params.nx + jj].speeds[3] - w1) > 0.0 &&
+          (cells[ii*params.nx + jj].speeds[6] - w2) > 0.0 &&
+          (cells[ii*params.nx + jj].speeds[7] - w2) > 0.0 )
+          {
+              // increase 'east-side' densities
+              cells[ii*params.nx + jj].speeds[1] += w1;
+              cells[ii*params.nx + jj].speeds[5] += w2;
+              cells[ii*params.nx + jj].speeds[8] += w2;
+              // decrease 'west-side' densities
+              cells[ii*params.nx + jj].speeds[3] -= w1;
+              cells[ii*params.nx + jj].speeds[6] -= w2;
+              cells[ii*params.nx + jj].speeds[7] -= w2;
+          }
+      //}
+    }
+  }
+
+
 }
 
 __kernel void d2q9bgk(const param_t params, __global speed_t* cells, __global speed_t* tmp_cells, __global speed_t* tmp_tmp_cells, __global char* obstacles, __global float* tot_u)

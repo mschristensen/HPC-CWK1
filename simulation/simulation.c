@@ -14,13 +14,12 @@ float timestep(const param_t params, const accel_area_t accel_area,
     lbm_context_t* lbm_context,
     speed_t** cells_ptr, speed_t** tmp_cells_ptr, speed_t** tmp_tmp_cells_ptr, char* obstacles)
 {
-
     cl_int GRID_SIZE = params.nx * params.ny;
     speed_t* cells = *cells_ptr;
     speed_t* tmp_cells = *tmp_cells_ptr;
     speed_t* tmp_tmp_cells = *tmp_tmp_cells_ptr;
 
-    accelerate_flow(params,accel_area,cells,obstacles);
+    //accelerate_flow(params,accel_area,cells,obstacles);
 
     // OPENCL PROPAGATE ---------------------------------------------------------------------
     // set work-item problem dimensions
@@ -107,64 +106,4 @@ void setArgs(lbm_context_t* lbm_context,
   err  = clSetKernelArg(lbm_context->kernels[0].kernel, 1, sizeof(cl_mem), &(lbm_context->kernels[0].args[0]));
   err |= clSetKernelArg(lbm_context->kernels[0].kernel, 2, sizeof(cl_mem), &(lbm_context->kernels[0].args[1]));
   if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel args", err);
-}
-
-void accelerate_flow(const param_t params, const accel_area_t accel_area,
-    speed_t* cells, char* obstacles)
-{
-    int ii,jj;     /* generic counters */
-    double w1,w2;  /* weighting factors */
-
-    /* compute weighting factors */
-    w1 = params.density * params.accel / 9.0;
-    w2 = params.density * params.accel / 36.0;
-
-    if (accel_area.col_or_row == ACCEL_COLUMN)
-    {
-        jj = accel_area.idx;
-
-        for (ii = 0; ii < params.ny; ii++)
-        {
-            /* if the cell is not occupied and
-            ** we don't send a density negative */
-            if (!obstacles[ii*params.nx + jj] &&
-            (cells[ii*params.nx + jj].speeds[4] - w1) > 0.0 &&
-            (cells[ii*params.nx + jj].speeds[7] - w2) > 0.0 &&
-            (cells[ii*params.nx + jj].speeds[8] - w2) > 0.0 )
-            {
-                /* increase 'north-side' densities */
-                cells[ii*params.nx + jj].speeds[2] += w1;
-                cells[ii*params.nx + jj].speeds[5] += w2;
-                cells[ii*params.nx + jj].speeds[6] += w2;
-                /* decrease 'south-side' densities */
-                cells[ii*params.nx + jj].speeds[4] -= w1;
-                cells[ii*params.nx + jj].speeds[7] -= w2;
-                cells[ii*params.nx + jj].speeds[8] -= w2;
-            }
-        }
-    }
-    else
-    {
-        ii = accel_area.idx;
-
-        for (jj = 0; jj < params.nx; jj++)
-        {
-            /* if the cell is not occupied and
-            ** we don't send a density negative */
-            if (!obstacles[ii*params.nx + jj] &&
-            (cells[ii*params.nx + jj].speeds[3] - w1) > 0.0 &&
-            (cells[ii*params.nx + jj].speeds[6] - w2) > 0.0 &&
-            (cells[ii*params.nx + jj].speeds[7] - w2) > 0.0 )
-            {
-                /* increase 'east-side' densities */
-                cells[ii*params.nx + jj].speeds[1] += w1;
-                cells[ii*params.nx + jj].speeds[5] += w2;
-                cells[ii*params.nx + jj].speeds[8] += w2;
-                /* decrease 'west-side' densities */
-                cells[ii*params.nx + jj].speeds[3] -= w1;
-                cells[ii*params.nx + jj].speeds[6] -= w2;
-                cells[ii*params.nx + jj].speeds[7] -= w2;
-            }
-        }
-    }
 }

@@ -318,6 +318,7 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 2, sizeof(cl_mem), &lbm_context->kernels[1].args[1]);
     err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 3, sizeof(cl_mem), &lbm_context->kernels[1].args[2]);
     err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 4, sizeof(cl_mem), &lbm_context->kernels[1].args[3]);
+    err  |= clSetKernelArg(lbm_context->kernels[1].kernel, 5, sizeof(accel_area_t), &accel_area);
     if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel 1 args", err);
 
     fprintf(stdout, "Finished initialising OpenCL\n");

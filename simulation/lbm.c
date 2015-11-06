@@ -144,7 +144,10 @@ int main(int argc, char* argv[])
             tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[7],
             tmp_tmp_cells[print_cell_index*params.nx + print_cell_index].speeds[8]);*/
 
-
+        if(ii == 0)
+        {
+          accelerate_flow(params,accel_area,cells,obstacles);
+        }
         av_vels[ii] = timestep(params, accel_area, &lbm_context, &cells, &tmp_cells, &tmp_tmp_cells, obstacles);
         //if(ii == 2) break;
 /*
@@ -203,6 +206,67 @@ int main(int argc, char* argv[])
     opencl_finalise(lbm_context);
 
     return EXIT_SUCCESS;
+}
+
+
+void accelerate_flow(const param_t params, const accel_area_t accel_area,
+    speed_t* cells, char* obstacles)
+{
+    int ii,jj;     /* generic counters */
+    double w1,w2;  /* weighting factors */
+
+    /* compute weighting factors */
+    w1 = params.density * params.accel / 9.0;
+    w2 = params.density * params.accel / 36.0;
+
+    if (accel_area.col_or_row == ACCEL_COLUMN)
+    {
+        jj = accel_area.idx;
+
+        for (ii = 0; ii < params.ny; ii++)
+        {
+            /* if the cell is not occupied and
+            ** we don't send a density negative */
+            if (!obstacles[ii*params.nx + jj] &&
+            (cells[ii*params.nx + jj].speeds[4] - w1) > 0.0 &&
+            (cells[ii*params.nx + jj].speeds[7] - w2) > 0.0 &&
+            (cells[ii*params.nx + jj].speeds[8] - w2) > 0.0 )
+            {
+                /* increase 'north-side' densities */
+                cells[ii*params.nx + jj].speeds[2] += w1;
+                cells[ii*params.nx + jj].speeds[5] += w2;
+                cells[ii*params.nx + jj].speeds[6] += w2;
+                /* decrease 'south-side' densities */
+                cells[ii*params.nx + jj].speeds[4] -= w1;
+                cells[ii*params.nx + jj].speeds[7] -= w2;
+                cells[ii*params.nx + jj].speeds[8] -= w2;
+            }
+        }
+    }
+    else
+    {
+        ii = accel_area.idx;
+
+        for (jj = 0; jj < params.nx; jj++)
+        {
+            /* if the cell is not occupied and
+            ** we don't send a density negative */
+            if (!obstacles[ii*params.nx + jj] &&
+            (cells[ii*params.nx + jj].speeds[3] - w1) > 0.0 &&
+            (cells[ii*params.nx + jj].speeds[6] - w2) > 0.0 &&
+            (cells[ii*params.nx + jj].speeds[7] - w2) > 0.0 )
+            {
+                /* increase 'east-side' densities */
+                cells[ii*params.nx + jj].speeds[1] += w1;
+                cells[ii*params.nx + jj].speeds[5] += w2;
+                cells[ii*params.nx + jj].speeds[8] += w2;
+                /* decrease 'west-side' densities */
+                cells[ii*params.nx + jj].speeds[3] -= w1;
+                cells[ii*params.nx + jj].speeds[6] -= w2;
+                cells[ii*params.nx + jj].speeds[7] -= w2;
+            }
+        }
+    }
 }
 
 void write_values(const char * final_state_file, const char * av_vels_file,
