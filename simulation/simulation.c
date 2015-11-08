@@ -12,11 +12,10 @@
 
 float timestep(const param_t params, const accel_area_t accel_area,
     lbm_context_t* lbm_context,
-    speed_t** cells_ptr, speed_t** tmp_cells_ptr, char* obstacles, int iter_num, unsigned int obstacle_count)
+    speed_t** cells_ptr, speed_t** tmp_cells_ptr, char* obstacles, int iter_num, unsigned int cell_count)
 {
     cl_int GRID_SIZE = params.nx * params.ny;
-    cl_int NUM_WORK_GROUPS = GRID_SIZE / 1024;
-    //printf("NUM_WORK_GROUPS = %d / %d = %d\n", GRID_SIZE, WORK_GROUP_SIZE, NUM_WORK_GROUPS);
+    cl_int NUM_WORK_GROUPS = (GRID_SIZE) / (WORK_GROUP_SIZE);
     speed_t* cells = *cells_ptr;
     speed_t* tmp_cells = *tmp_cells_ptr;
 
@@ -58,32 +57,14 @@ float timestep(const param_t params, const accel_area_t accel_area,
                               0, NULL, NULL);
     if (CL_SUCCESS != err) DIE("OpenCL error reading back tot_u array %d!\n", err);
 
-
-
-    // CALCULATE AV_VELS OUTPUT FROM tot_u ARRAY
-    int ii, jj, index;
+    // SUM UP EACH WORK GROUP'S REDUCTION, IN ORDER TO CALCULATE AV_VELS OUTPUT
+    int ii;
     float tot_u_out = 0.0;
-    int tot_cells = 0;
-    /*
-    for(ii = 0; ii < params.ny; ii++)
-    {
-      for(jj = 0; jj < params.nx; jj++)
-      {
-        index = ii*params.nx + jj;
-        if(tot_u[index] >= 0)
-        {
-          tot_u_out += tot_u[index];
-          tot_cells++;
-        }
-      }
-    }*/
     for(ii = 0; ii < NUM_WORK_GROUPS; ii++)
     {
       tot_u_out += tot_u[ii];
-      //printf("%f ", tot_u[ii]);
     }
-    printf("result = %f/%d = %f\n", tot_u_out, obstacle_count, tot_u_out / (float)obstacle_count);
-    return tot_u_out / (float)obstacle_count;
+    return tot_u_out / cell_count;
 }
 
 void setArgs(lbm_context_t* lbm_context,

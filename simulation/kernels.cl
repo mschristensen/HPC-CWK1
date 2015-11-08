@@ -82,7 +82,7 @@ __kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __loc
       tmp_cells[ii*params.nx + jj].speeds[7] = tmp[5];
       tmp_cells[ii*params.nx + jj].speeds[8] = tmp[6];
 
-      //tot_u[ii*params.nx + jj] = -1.0;
+      // Obstacle here so only add 0 to the av_vels sum
       sums[lid_y * lsz_x + lid_x] = 0.0;
   } else {
     /* compute local density total */
@@ -191,7 +191,6 @@ __kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __loc
         local_density;
 
     /* accumulate the norm of x- and y- velocity components */
-    //tot_u[ii*params.nx + jj] = sqrt(u_x*u_x + u_y*u_y);
     sums[lid_y * lsz_x + lid_x] = sqrt(u_x*u_x + u_y*u_y);
   }
 
@@ -247,7 +246,8 @@ __kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __loc
     }
   }
 
-  //REDUCTION
+  // AV_VELS REDUCTION
+  // See: http://web.engr.oregonstate.edu/~mjb/cs575/Handouts/opencl.reduction.2pp.pdf
   int offset;
   int lsz = lsz_x * lsz_y;
   int tnum = lid_y * lsz_x + lid_x;
@@ -267,6 +267,5 @@ __kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __loc
   if(tnum == 0)
   {
     tot_u[wgnum] = sums[0];
-    //printf("%d: %f\n", wgnum, sums[0]);
   }
 }

@@ -108,7 +108,7 @@ void parse_args (int argc, char* argv[],
 
 void initialise(const char* param_file, accel_area_t * accel_area,
     param_t* params, speed_t** cells_ptr, speed_t** tmp_cells_ptr,
-    char** obstacles_ptr, float** av_vels_ptr, unsigned int* obstacle_count)
+    char** obstacles_ptr, float** av_vels_ptr, unsigned int* cell_count)
 {
     FILE   *fp;            /* file pointer */
     int    ii,jj, kk;          /* generic counters */
@@ -246,8 +246,13 @@ void initialise(const char* param_file, accel_area_t * accel_area,
                     y_pos <  obstacles[kk].obs_y_max)
                 {
                     (*obstacles_ptr)[ii*params->nx + jj] = 1;
-                    (*obstacle_count)++;
                 }
+            }
+
+            // Count the number of live cells
+            if(!(*obstacles_ptr)[ii*params->nx + jj])
+            {
+              (*cell_count)++;
             }
         }
     }

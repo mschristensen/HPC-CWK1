@@ -80,7 +80,8 @@ int main(int argc, char* argv[])
     speed_t* cells     = NULL;    /* grid containing fluid densities */
     speed_t* tmp_cells = NULL;    /* scratch space */
     char*    obstacles = NULL;    /* grid indicating which cells are blocked */
-    unsigned int obstacle_count = 0;
+    unsigned int cell_count = 0;  /* the number of live cells i.e. those which do not
+                                     contain an obstacle (used to calculate av_vels)*/
     float*  av_vels   = NULL;    /* a record of the av. velocity computed for each timestep */
 
     int    ii;                    /*  generic counter */
@@ -95,7 +96,7 @@ int main(int argc, char* argv[])
 
     parse_args(argc, argv, &final_state_file, &av_vels_file, &param_file, &device_id);
 
-    initialise(param_file, &accel_area, &params, &cells, &tmp_cells, &obstacles, &av_vels, &obstacle_count);
+    initialise(param_file, &accel_area, &params, &cells, &tmp_cells, &obstacles, &av_vels, &cell_count);
     opencl_initialise(device_id, params, accel_area, &lbm_context, cells, tmp_cells, obstacles);
 
     // Need to explicitly call first accelerate_flow
@@ -120,15 +121,7 @@ int main(int argc, char* argv[])
             cells[print_cell_index*params.nx + print_cell_index].speeds[7],
             cells[print_cell_index*params.nx + print_cell_index].speeds[8]);*/
 
-        av_vels[ii] = timestep(params, accel_area, &lbm_context, &cells, &tmp_cells, obstacles, ii, obstacle_count);
-        //printf("av_vels[%d] = %f\n", ii, av_vels[ii]);
-        if(ii == params.max_iters - 1)
-        {
-          //printf("LAST SWAP\n");
-          //swap(&cells, &tmp_cells);
-        }
-        //swap(&cells, &tmp_cells);
-        //printf("\n");
+        av_vels[ii] = timestep(params, accel_area, &lbm_context, &cells, &tmp_cells, obstacles, ii, cell_count);
         //if(ii == 5) break;
 
         /*printf("JUST AFTER TIMESTEP\n");
@@ -142,8 +135,6 @@ int main(int argc, char* argv[])
               cells[print_cell_index*params.nx + print_cell_index].speeds[6],
               cells[print_cell_index*params.nx + print_cell_index].speeds[7],
               cells[print_cell_index*params.nx + print_cell_index].speeds[8]);*/
-        //swap(&cells, &tmp_tmp_cells);
-        //if(ii == 2000) break;
 
         #ifdef DEBUG
         printf("==timestep: %d==\n", ii);
