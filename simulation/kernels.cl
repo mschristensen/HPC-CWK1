@@ -238,4 +238,10 @@ __kernel void d2q9bgk(const param_t params, __global speed_t* cells, __global sp
       }
     }
   }
+
+  //speed_t** cells_ptr = &cells;
+  //speed_t** tmp_cells_ptr = &tmp_cells;
+  //speed_t* temp = *tmp_cells_ptr;
+  //*tmp_cells_ptr = *cells_ptr;
+  //*cells_ptr = temp;
 }
