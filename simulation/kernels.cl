@@ -25,11 +25,16 @@ typedef struct {
     int idx;
 } accel_area_t;
 
-__kernel void d2q9bgk(const param_t params, __global speed_t* cells, __global speed_t* tmp_cells, __global char* obstacles, __global float* tot_u, const accel_area_t accel_area)
+__kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __local float* sums, __global speed_t* cells, __global speed_t* tmp_cells, __global char* obstacles, __global float* tot_u)
 {
   int ii,jj,kk;  /* generic counters */
   ii = get_global_id(1);
   jj = get_global_id(0);
+
+  int lid_x = get_local_id(0);
+  int lid_y = get_local_id(1);
+  int lsz_x = get_local_size(0);
+  int lsz_y = get_local_size(1);
 
   const float c_sq = 1.0/3.0;  /* square of speed of sound */
   const float w0 = 4.0/9.0;    /* weighting factor */
@@ -77,7 +82,8 @@ __kernel void d2q9bgk(const param_t params, __global speed_t* cells, __global sp
       tmp_cells[ii*params.nx + jj].speeds[7] = tmp[5];
       tmp_cells[ii*params.nx + jj].speeds[8] = tmp[6];
 
-      tot_u[ii*params.nx + jj] = -1.0;
+      //tot_u[ii*params.nx + jj] = -1.0;
+      sums[lid_y * lsz_x + lid_x] = 0.0;
   } else {
     /* compute local density total */
     local_density = 0.0;
@@ -185,8 +191,10 @@ __kernel void d2q9bgk(const param_t params, __global speed_t* cells, __global sp
         local_density;
 
     /* accumulate the norm of x- and y- velocity components */
-    tot_u[ii*params.nx + jj] = sqrt(u_x*u_x + u_y*u_y);
+    //tot_u[ii*params.nx + jj] = sqrt(u_x*u_x + u_y*u_y);
+    sums[lid_y * lsz_x + lid_x] = sqrt(u_x*u_x + u_y*u_y);
   }
+
 
   // ACCELERATE_FLOW STEP
 
@@ -239,9 +247,26 @@ __kernel void d2q9bgk(const param_t params, __global speed_t* cells, __global sp
     }
   }
 
-  //speed_t** cells_ptr = &cells;
-  //speed_t** tmp_cells_ptr = &tmp_cells;
-  //speed_t* temp = *tmp_cells_ptr;
-  //*tmp_cells_ptr = *cells_ptr;
-  //*cells_ptr = temp;
+  //REDUCTION
+  int offset;
+  int lsz = lsz_x * lsz_y;
+  int tnum = lid_y * lsz_x + lid_x;
+  int wgnum = get_group_id(1) * get_num_groups(0) + get_group_id(0);
+
+  for(offset = 1; offset < lsz; offset *= 2)
+  {
+    int mask = 2*offset - 1;
+    barrier(CLK_LOCAL_MEM_FENCE);
+    if((tnum & mask) == 0)
+    {
+      sums[tnum] += sums[tnum + offset];
+    }
+  }
+
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if(tnum == 0)
+  {
+    tot_u[wgnum] = sums[0];
+    //printf("%d: %f\n", wgnum, sums[0]);
+  }
 }

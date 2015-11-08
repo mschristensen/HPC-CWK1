@@ -13,6 +13,11 @@
 #define BOX_X_SIZE (100.0)
 #define BOX_Y_SIZE (100.0)
 
+// OpenCL work group dimensions
+#define WORK_GROUP_SIZE_X 32
+#define WORK_GROUP_SIZE_Y 32
+#define WORK_GROUP_SIZE   WORK_GROUP_SIZE_X * WORK_GROUP_SIZE_Y
+
 /* struct to hold the parameter values */
 typedef struct {
     cl_int nx;            /* no. of cells in x-direction */
@@ -61,9 +66,9 @@ typedef struct {
 void parse_args (int argc, char* argv[],
     char** final_state_file, char** av_vels_file, char** param_file, int * device_id);
 
-void initialise(const char* paramfile, accel_area_t * accel_area,
+void initialise(const char* param_file, accel_area_t * accel_area,
     param_t* params, speed_t** cells_ptr, speed_t** tmp_cells_ptr,
-    char** obstacles_ptr, float** av_vels_ptr);
+    char** obstacles_ptr, float** av_vels_ptr, unsigned int* obstacle_count);
 
 void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     lbm_context_t * lbm_context, speed_t * cells, speed_t * tmp_cells, char * obstacles);
@@ -77,9 +82,9 @@ void write_values(const char * final_state_file, const char * av_vels_file,
 void finalise(speed_t** cells_ptr, speed_t** tmp_cells_ptr,
     char** obstacles_ptr, float** av_vels_ptr);
 
-float timestep(const param_t params, const accel_area_t accel_area,
-    lbm_context_t* lbm_context,
-    speed_t** cells_ptr, speed_t** tmp_cells_ptr, char* obstacles, int iter_num);
+    float timestep(const param_t params, const accel_area_t accel_area,
+        lbm_context_t* lbm_context,
+        speed_t** cells_ptr, speed_t** tmp_cells_ptr, char* obstacles, int iter_num, unsigned int obstacle_count);
 
 void accelerate_flow(const param_t params, const accel_area_t accel_area,
     speed_t* cells, char* obstacles);
