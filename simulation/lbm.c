@@ -92,12 +92,14 @@ int main(int argc, char* argv[])
     double systim;                /* floating point number to record elapsed system CPU time */
 
     int device_id;
+    int work_group_size_x;
+    int work_group_size_y;
     lbm_context_t lbm_context;
 
-    parse_args(argc, argv, &final_state_file, &av_vels_file, &param_file, &device_id);
+    parse_args(argc, argv, &final_state_file, &av_vels_file, &param_file, &device_id, &work_group_size_x, &work_group_size_y);
 
     initialise(param_file, &accel_area, &params, &cells, &tmp_cells, &obstacles, &av_vels, &cell_count);
-    opencl_initialise(device_id, params, accel_area, &lbm_context, cells, tmp_cells, obstacles);
+    opencl_initialise(device_id, params, accel_area, &lbm_context, cells, tmp_cells, obstacles, work_group_size_x, work_group_size_y);
 
     // Need to explicitly call first accelerate_flow
     accelerate_flow(params,accel_area,cells,obstacles);
@@ -120,7 +122,6 @@ int main(int argc, char* argv[])
             cells[print_cell_index*params.nx + print_cell_index].speeds[6],
             cells[print_cell_index*params.nx + print_cell_index].speeds[7],
             cells[print_cell_index*params.nx + print_cell_index].speeds[8]);*/
-
         av_vels[ii] = timestep(params, accel_area, &lbm_context, &cells, &tmp_cells, obstacles, ii, cell_count);
         //if(ii == 5) break;
 

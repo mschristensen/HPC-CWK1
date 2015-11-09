@@ -143,7 +143,7 @@ void list_opencl_platforms(void)
 }
 
 void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
-    lbm_context_t * lbm_context, speed_t * cells, speed_t * tmp_cells, char * obstacles)
+    lbm_context_t * lbm_context, speed_t * cells, speed_t * tmp_cells, char * obstacles, int work_group_size_x, int work_group_size_y)
 {
     /* get device etc. */
     cl_platform_id * platforms = NULL;
@@ -255,19 +255,45 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     *   Allocate memory and create kernels
     */
 
-    cl_int GRID_SIZE = params.ny * params.nx;
-    cl_int NUM_WORK_GROUPS = GRID_SIZE / WORK_GROUP_SIZE;
-    printf("GRID SIZE = %d\n", GRID_SIZE);
-
-    cl_mem d_cells          = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(speed_t) * GRID_SIZE, cells,     NULL);
-    cl_mem d_tmp_cells      = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE,                        sizeof(speed_t) * GRID_SIZE, NULL,      NULL);
-    cl_mem d_obstacles      = clCreateBuffer(lbm_context->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,  sizeof(speed_t) * GRID_SIZE, obstacles, NULL);
-    cl_mem d_tot_u          = clCreateBuffer(lbm_context->context, CL_MEM_WRITE_ONLY,                        sizeof(cl_float)* NUM_WORK_GROUPS, NULL,NULL);
-
     #define KERNEL_NUM 1
     lbm_context->kernels = malloc(sizeof(lbm_kernel_t) * KERNEL_NUM);
     lbm_context->kernels[0].kernel = clCreateKernel(lbm_context->program, "d2q9bgk", &err);
     if (CL_SUCCESS != err) DIE("OpenCL error %d creating kernel 0", err);
+
+    // Set OpenCL kernel dimension arguments
+
+    // Default wg size is 32x32, however these can also be specified on the command line
+    lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X = (work_group_size_x == 0) ? 32 : work_group_size_x;
+    lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y = (work_group_size_y == 0) ? 32 : work_group_size_y;
+
+    // Problem size is params.nx by params.ny iff. each is divisible by the corresponding wg size.
+    // Otherwise, it is padded to the nearest multiple of the corresponding wg size.
+    lbm_context->kernels[0].dimensions.PROBLEM_SIZE_X = ((params.nx % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X) == 0) ? params.nx : (params.nx + lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X - (params.nx % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X));
+    lbm_context->kernels[0].dimensions.PROBLEM_SIZE_Y = ((params.ny % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y) == 0) ? params.ny : (params.ny + lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y - (params.ny % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y));
+
+    // Grid size is PROBLEM_SIZE_X * PROBLEM_SIZE_Y, which may be larger than params.nx * params.ny in the case of padding
+    lbm_context->kernels[0].dimensions.GRID_SIZE = lbm_context->kernels[0].dimensions.PROBLEM_SIZE_X * lbm_context->kernels[0].dimensions.PROBLEM_SIZE_Y;
+
+    // Number of work groups is calculated by the problem_size/wg_size
+    lbm_context->kernels[0].dimensions.NUM_WORK_GROUPS = (lbm_context->kernels[0].dimensions.GRID_SIZE) /
+                                                         ((lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X) *
+                                                         (lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y));
+
+    // Print out dimension data
+    printf("PARAMS.NX: %d\nPARAMS.NY: %d\nPROBLEM_SIZE_X: %d\nPROBLEM_SIZE_Y: %d\nWORK_GROUP_SIZE_X: %d\nWORK_GROUP_SIZE_Y: %d\nNUM_WORK_GROUPS: %d\n",
+          params.nx, params.ny,
+          lbm_context->kernels[0].dimensions.PROBLEM_SIZE_X, lbm_context->kernels[0].dimensions.PROBLEM_SIZE_Y,
+          lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X, lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y,
+          lbm_context->kernels[0].dimensions.NUM_WORK_GROUPS);
+
+    // Create the buffers. Note that the size of the cells/tmp_cells/obstacles arrays
+    // is still the same as originally, i.e. params.nx * params.ny, and therefore does not include the padding.
+    // Instead, the kernel itself checks that the current work item is within a valid range, and if not it does not
+    // perform any calculation.
+    cl_mem d_cells          = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(speed_t) * params.nx * params.ny, cells,     NULL);
+    cl_mem d_tmp_cells      = clCreateBuffer(lbm_context->context, CL_MEM_READ_WRITE,                        sizeof(speed_t) * params.nx * params.ny, NULL,      NULL);
+    cl_mem d_obstacles      = clCreateBuffer(lbm_context->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,  sizeof(char) * params.nx * params.ny, obstacles, NULL);
+    cl_mem d_tot_u          = clCreateBuffer(lbm_context->context, CL_MEM_WRITE_ONLY,                        sizeof(cl_float)* lbm_context->kernels[0].dimensions.NUM_WORK_GROUPS, NULL,NULL);
 
     // allocate memory for the kernel 0 args
     lbm_context->kernels[0].args = malloc(sizeof(cl_mem) * 4);
@@ -279,7 +305,7 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     // set kernel 0 args
     err   = clSetKernelArg(lbm_context->kernels[0].kernel, 0, sizeof(param_t), &params);
     err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 1, sizeof(accel_area_t), &accel_area);
-    err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 2, sizeof(cl_float) * WORK_GROUP_SIZE, NULL);
+    err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 2, sizeof(cl_float) * (lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X) * (lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y), NULL);
     err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 3, sizeof(cl_mem), &lbm_context->kernels[0].args[0]);
     err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 4, sizeof(cl_mem), &lbm_context->kernels[0].args[1]);
     err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 5, sizeof(cl_mem), &lbm_context->kernels[0].args[2]);

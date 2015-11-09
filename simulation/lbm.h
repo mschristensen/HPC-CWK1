@@ -13,11 +13,6 @@
 #define BOX_X_SIZE (100.0)
 #define BOX_Y_SIZE (100.0)
 
-// OpenCL work group dimensions
-#define WORK_GROUP_SIZE_X 32
-#define WORK_GROUP_SIZE_Y 32
-#define WORK_GROUP_SIZE   (WORK_GROUP_SIZE_X) * (WORK_GROUP_SIZE_Y)
-
 /* struct to hold the parameter values */
 typedef struct {
     cl_int nx;            /* no. of cells in x-direction */
@@ -37,10 +32,20 @@ typedef struct {
     float obs_y_max;
 } obstacle_t;
 
+typedef struct {
+  int PROBLEM_SIZE_X;
+  int PROBLEM_SIZE_Y;
+  int WORK_GROUP_SIZE_X;
+  int WORK_GROUP_SIZE_Y;
+  int NUM_WORK_GROUPS;
+  int GRID_SIZE;
+} lbm_dimensions_t;
+
 // Custom struct to allow kernels to be described in an lbm_context_t
 typedef struct {
     cl_kernel kernel;         //the actual kernel
     cl_mem* args;             //array of kernel args
+    lbm_dimensions_t dimensions;
 } lbm_kernel_t;
 
 typedef struct {
@@ -64,14 +69,14 @@ typedef struct {
 
 /* Parse command line arguments to get filenames */
 void parse_args (int argc, char* argv[],
-    char** final_state_file, char** av_vels_file, char** param_file, int * device_id);
+    char** final_state_file, char** av_vels_file, char** param_file, int * device_id, int * work_group_size_x, int * work_group_size_y);
 
 void initialise(const char* param_file, accel_area_t * accel_area,
     param_t* params, speed_t** cells_ptr, speed_t** tmp_cells_ptr,
     char** obstacles_ptr, float** av_vels_ptr, unsigned int* cell_count);
 
 void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
-    lbm_context_t * lbm_context, speed_t * cells, speed_t * tmp_cells, char * obstacles);
+    lbm_context_t * lbm_context, speed_t * cells, speed_t * tmp_cells, char * obstacles, int work_group_size_x, int work_group_size_y);
 void opencl_finalise(lbm_context_t lbm_context);
 
 void list_opencl_platforms(void);

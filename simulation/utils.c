@@ -26,7 +26,7 @@ void exit_with_error(int line, const char* filename, const char* format, ...)
 }
 
 void parse_args (int argc, char* argv[],
-    char** final_state_file, char** av_vels_file, char** param_file, int * device_id)
+    char** final_state_file, char** av_vels_file, char** param_file, int * device_id, int * work_group_size_x, int * work_group_size_y)
 {
     int character;
 
@@ -34,6 +34,8 @@ void parse_args (int argc, char* argv[],
     *final_state_file = NULL;
     *param_file = NULL;
     *device_id = 0;
+    *work_group_size_x = 0;
+    *work_group_size_y = 0;
 
     const char * help_msg =
     "usage: ./lbm [OPTIONS] \n"
@@ -47,11 +49,15 @@ void parse_args (int argc, char* argv[],
     "       Choose OpenCL device\n"
     "   -p PARAM_FILE\n"
     "       Name of input parameter file\n"
+    "   -y\n"
+    "       Work group size in Y dimension\n"
+    "   -x\n"
+    "       Work group size in X dimension\n"
     "   -h\n"
     "       Show this message and exit\n";
 
     /* Used getopt to parse command line arguments for filenames */
-    while ((character = getopt(argc, argv, "a:f:p:d:hl")) != -1)
+    while ((character = getopt(argc, argv, "a:f:p:d:x:y:hl")) != -1)
     {
         switch (character)
         {
@@ -70,6 +76,12 @@ void parse_args (int argc, char* argv[],
             break;
         case 'd':
             sscanf(optarg, "%d", device_id);
+            break;
+        case 'x':
+            sscanf(optarg, "%d", work_group_size_x);
+            break;
+        case 'y':
+            sscanf(optarg, "%d", work_group_size_y);
             break;
         case 'h':
             fprintf(stderr, "%s", help_msg);
