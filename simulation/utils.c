@@ -272,6 +272,25 @@ void initialise(const char* param_file, accel_area_t * accel_area,
     free(obstacles);
 }
 
+
+void writeCellsFile(param_t* params, FILE* cells_file, speed_t* cells)
+{
+  int ii, jj, kk;
+  for(ii = 0; ii < params->ny; ii++)
+  {
+    for(jj = 0; jj < params->nx; jj++)
+    {
+      int index = ii * params->nx + jj;
+      for(kk = 0; kk < NSPEEDS; kk++)
+      {
+        fprintf(cells_file, "%f ", cells[index].speeds[kk]);
+      }
+      fprintf(cells_file, "\n");
+    }
+  }
+  fclose(cells_file);
+}
+
 void finalise(speed_t** cells_ptr, speed_t** tmp_cells_ptr,
     char** obstacles_ptr, float** av_vels_ptr)
 {

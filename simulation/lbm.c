@@ -143,6 +143,15 @@ int main(int argc, char* argv[])
         printf("tot density: %.12E\n", total_density(params, cells));
         #endif
     }
+
+    FILE* cells_file = fopen("cells", "w");
+    if(cells_file == NULL)
+    {
+      printf("Unable to create cells file!\n");
+    } else {
+      writeCellsFile(&params, cells_file, cells);
+    }
+
     const float last_av_vel = av_vels[params.max_iters - 1];
 
     // Do not remove this, or the timing will be incorrect!
