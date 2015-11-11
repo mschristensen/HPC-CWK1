@@ -17,7 +17,7 @@ device=$(cat $PBS_GPUFILE)
 device=${device#*gpu}
 
 #! Run options for the application
-options="PARAM_FILE=../inputs/box.params DEVICE=$device"
+options="PARAM_FILE=../inputs/large_pipe.params DEVICE=$device"
 
 ###############################################################
 ### You should not have to change anything below this line ####

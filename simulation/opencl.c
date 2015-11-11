@@ -268,14 +268,26 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X = (work_group_size_x == 0) ? 32 : work_group_size_x;
     lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y = (work_group_size_y == 0) ? 4 : work_group_size_y;
 
-    //int bbox_sz_x = xmax - xmin;
-    //int bbox_sz_y = ymax - ymin;
-
+    int bbox_sz_x = xmax - xmin;
+    int bbox_sz_y = ymax - ymin;
+    if((bbox_sz_x % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X) != 0)
+    {
+      xmax = xmax + lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X - (bbox_sz_x % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X);
+    }
+    if((bbox_sz_y % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y) != 0)
+    {
+      ymax = ymax + lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y - (bbox_sz_y % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y);
+    }
+    bbox_sz_x = xmax - xmin;
+    bbox_sz_y = ymax - ymin;
+    printf("%d\n", (bbox_sz_x % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X));
+    printf("%d\n", (bbox_sz_y % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y));
     // Problem size is params.nx by params.ny iff. each is divisible by the corresponding wg size.
     // Otherwise, it is padded to the nearest multiple of the corresponding wg size.
-    lbm_context->kernels[0].dimensions.PROBLEM_SIZE_X = ((params.nx % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X) == 0) ? params.nx : (params.nx + lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X - (params.nx % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X));
-    lbm_context->kernels[0].dimensions.PROBLEM_SIZE_Y = ((params.ny % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y) == 0) ? params.ny : (params.ny + lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y - (params.ny % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y));
-
+    lbm_context->kernels[0].dimensions.PROBLEM_SIZE_X = ((bbox_sz_x % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X) == 0) ? bbox_sz_x : (bbox_sz_x + lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X - (bbox_sz_x % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X));
+    lbm_context->kernels[0].dimensions.PROBLEM_SIZE_Y = ((bbox_sz_y % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y) == 0) ? bbox_sz_y : (bbox_sz_y + lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y - (bbox_sz_y % lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y));
+    printf("PS: %d, %d\n", lbm_context->kernels[0].dimensions.PROBLEM_SIZE_X, lbm_context->kernels[0].dimensions.PROBLEM_SIZE_Y);
+    printf("min (%d, %d), max (%d, %d)\n", xmin, ymin, xmax, ymax);
     // Grid size is PROBLEM_SIZE_X * PROBLEM_SIZE_Y, which may be larger than params.nx * params.ny in the case of padding
     lbm_context->kernels[0].dimensions.GRID_SIZE = lbm_context->kernels[0].dimensions.PROBLEM_SIZE_X * lbm_context->kernels[0].dimensions.PROBLEM_SIZE_Y;
 
@@ -315,6 +327,8 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 4, sizeof(cl_mem), &lbm_context->kernels[0].args[1]);
     err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 5, sizeof(cl_mem), &lbm_context->kernels[0].args[2]);
     err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 6, sizeof(cl_mem), &lbm_context->kernels[0].args[3]);
+    err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 7, sizeof(cl_int), &xmin);
+    err  |= clSetKernelArg(lbm_context->kernels[0].kernel, 8, sizeof(cl_int), &ymin);
     if (CL_SUCCESS != err) DIE("OpenCL error %d setting kernel 0 args", err);
 
     fprintf(stdout, "Finished initialising OpenCL\n");

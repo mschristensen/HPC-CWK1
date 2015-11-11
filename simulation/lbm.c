@@ -114,8 +114,8 @@ int main(int argc, char* argv[])
     tic=timstr.tv_sec+(timstr.tv_usec/1000000.0);
 
     for (ii = 0; ii < params.max_iters; ii++)
-    {/*
-      printf("JUST BEFORE TIMESTEP\n");
+    {
+      printf("JUST BEFORE TIMESTEP %d\n",ii);
       int print_cell_index = 50;
       printf("CELLS  @ (%d) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n", print_cell_index,
             cells[print_cell_index*params.nx + print_cell_index].speeds[0],
@@ -126,11 +126,11 @@ int main(int argc, char* argv[])
             cells[print_cell_index*params.nx + print_cell_index].speeds[5],
             cells[print_cell_index*params.nx + print_cell_index].speeds[6],
             cells[print_cell_index*params.nx + print_cell_index].speeds[7],
-            cells[print_cell_index*params.nx + print_cell_index].speeds[8]);*/
+            cells[print_cell_index*params.nx + print_cell_index].speeds[8]);
         av_vels[ii] = timestep(params, accel_area, &lbm_context, &cells, &tmp_cells, obstacles, ii, cell_count);
-        //if(ii == 5) break;
+        if(ii == 500) break;
 
-        /*printf("JUST AFTER TIMESTEP\n");
+        printf("JUST AFTER TIMESTEP\n");
         printf("CELLS  @ (%d) = {%f, %f, %f, %f, %f, %f, %f, %f, %f}\n", print_cell_index,
               cells[print_cell_index*params.nx + print_cell_index].speeds[0],
               cells[print_cell_index*params.nx + print_cell_index].speeds[1],
@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
               cells[print_cell_index*params.nx + print_cell_index].speeds[5],
               cells[print_cell_index*params.nx + print_cell_index].speeds[6],
               cells[print_cell_index*params.nx + print_cell_index].speeds[7],
-              cells[print_cell_index*params.nx + print_cell_index].speeds[8]);*/
+              cells[print_cell_index*params.nx + print_cell_index].speeds[8]);
 
         #ifdef DEBUG
         printf("==timestep: %d==\n", ii);

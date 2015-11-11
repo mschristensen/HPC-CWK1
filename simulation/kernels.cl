@@ -25,11 +25,15 @@ typedef struct {
     int idx;
 } accel_area_t;
 
-__kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __local float* sums, __global speed_t* cells, __global speed_t* tmp_cells, __global char* obstacles, __global float* tot_u)
+__kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __local float* sums, __global speed_t* cells, __global speed_t* tmp_cells, __global char* obstacles, __global float* tot_u,
+  const int xmin, const int ymin)
 {
   int ii,jj,kk;  /* generic counters */
   ii = get_global_id(1);
+  ii += ymin;
   jj = get_global_id(0);
+  jj += xmin;
+  //printf("%d %d\n", xmin, ymin);
 
   int lid_x = get_local_id(0);
   int lid_y = get_local_id(1);
@@ -56,7 +60,7 @@ __kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __loc
   // the work group size! If it is not, the behaviour is the same as an obstacle,
   // i.e. set the sum for the work item to 0. Note that the barriers still need to be
   // executed after this block.
-  if(ii >= params.ny || jj >= params.nx)
+  if(ii >= params.ny || jj >= params.nx || ii < 0 || jj < 0)
   {
     sums[lid_y * lsz_x + lid_x] = 0.0;
   } else {
