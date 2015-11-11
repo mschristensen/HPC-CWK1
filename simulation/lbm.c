@@ -144,14 +144,6 @@ int main(int argc, char* argv[])
         #endif
     }
 
-    FILE* cells_file = fopen("cells", "w");
-    if(cells_file == NULL)
-    {
-      printf("Unable to create cells file!\n");
-    } else {
-      writeCellsFile(&params, cells_file, cells);
-    }
-
     const float last_av_vel = av_vels[params.max_iters - 1];
 
     // Do not remove this, or the timing will be incorrect!

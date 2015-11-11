@@ -56,6 +56,8 @@ __kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __loc
   // the work group size! If it is not, the behaviour is the same as an obstacle,
   // i.e. set the sum for the work item to 0. Note that the barriers still need to be
   // executed after this block.
+
+
   if(ii >= params.ny || jj >= params.nx)
   {
     sums[lid_y * lsz_x + lid_x] = 0.0;
@@ -98,10 +100,15 @@ __kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __loc
       /* compute local density total */
       local_density = 0.0;
 
-      for (kk = 0; kk < NSPEEDS; kk++)
-      {
-          local_density += tmp[kk];
-      }
+      local_density += tmp[0];
+      local_density += tmp[1];
+      local_density += tmp[2];
+      local_density += tmp[3];
+      local_density += tmp[4];
+      local_density += tmp[5];
+      local_density += tmp[6];
+      local_density += tmp[7];
+      local_density += tmp[8];
 
       /* compute x velocity component */
       u_x = (tmp[1] +
@@ -165,22 +172,29 @@ __kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __loc
           - u_sq / (2.0 * c_sq));
 
       /* relaxation step */
-      for (kk = 0; kk < NSPEEDS; kk++)
-      {
-          tmp_cells[ii*params.nx + jj].speeds[kk] =
-              (tmp[kk] + params.omega *
-              (d_equ[kk] - tmp[kk]));
-      }
+      tmp_cells[ii*params.nx + jj].speeds[0] = (tmp[0] + params.omega * (d_equ[0] - tmp[0]));
+      tmp_cells[ii*params.nx + jj].speeds[1] = (tmp[1] + params.omega * (d_equ[1] - tmp[1]));
+      tmp_cells[ii*params.nx + jj].speeds[2] = (tmp[2] + params.omega * (d_equ[2] - tmp[2]));
+      tmp_cells[ii*params.nx + jj].speeds[3] = (tmp[3] + params.omega * (d_equ[3] - tmp[3]));
+      tmp_cells[ii*params.nx + jj].speeds[4] = (tmp[4] + params.omega * (d_equ[4] - tmp[4]));
+      tmp_cells[ii*params.nx + jj].speeds[5] = (tmp[5] + params.omega * (d_equ[5] - tmp[5]));
+      tmp_cells[ii*params.nx + jj].speeds[6] = (tmp[6] + params.omega * (d_equ[6] - tmp[6]));
+      tmp_cells[ii*params.nx + jj].speeds[7] = (tmp[7] + params.omega * (d_equ[7] - tmp[7]));
+      tmp_cells[ii*params.nx + jj].speeds[8] = (tmp[8] + params.omega * (d_equ[8] - tmp[8]));
 
       //AV_VELS STEP
 
       /* local density total */
       local_density = 0.0;
-
-      for (kk = 0; kk < NSPEEDS; kk++)
-      {
-          local_density += tmp_cells[ii*params.nx + jj].speeds[kk];
-      }
+      local_density += tmp_cells[ii*params.nx + jj].speeds[0];
+      local_density += tmp_cells[ii*params.nx + jj].speeds[1];
+      local_density += tmp_cells[ii*params.nx + jj].speeds[2];
+      local_density += tmp_cells[ii*params.nx + jj].speeds[3];
+      local_density += tmp_cells[ii*params.nx + jj].speeds[4];
+      local_density += tmp_cells[ii*params.nx + jj].speeds[5];
+      local_density += tmp_cells[ii*params.nx + jj].speeds[6];
+      local_density += tmp_cells[ii*params.nx + jj].speeds[7];
+      local_density += tmp_cells[ii*params.nx + jj].speeds[8];
 
       /* x-component of velocity */
       u_x = (tmp_cells[ii*params.nx + jj].speeds[1] +
