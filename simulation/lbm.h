@@ -76,7 +76,9 @@ void initialise(const char* param_file, accel_area_t * accel_area,
     char** obstacles_ptr, float** av_vels_ptr, unsigned int* cell_count);
 
 void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
-    lbm_context_t * lbm_context, speed_t * cells, speed_t * tmp_cells, char * obstacles, int work_group_size_x, int work_group_size_y);
+    lbm_context_t * lbm_context, speed_t * cells, speed_t * tmp_cells, char * obstacles,
+    int work_group_size_x, int work_group_size_y,
+    int xmin, int ymin, int xmax, int ymax);
 void opencl_finalise(lbm_context_t lbm_context);
 
 void list_opencl_platforms(void);
@@ -98,7 +100,7 @@ void rebound(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obs
 void collision(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles);
 double av_velocity(const param_t params, speed_t* cells, char* obstacles);
 
-void writeCellsFile(param_t* params, FILE* cells_file, speed_t* cells);
+void get_bbox(const param_t params, char* obstacles, int* xmin, int* ymin, int* xmax, int* ymax);
 
 void setArgs(lbm_context_t* lbm_context,
     speed_t* cells, speed_t* tmp_cells, int GRID_SIZE, int iter_num);

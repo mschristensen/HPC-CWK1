@@ -99,7 +99,12 @@ int main(int argc, char* argv[])
     parse_args(argc, argv, &final_state_file, &av_vels_file, &param_file, &device_id, &work_group_size_x, &work_group_size_y);
 
     initialise(param_file, &accel_area, &params, &cells, &tmp_cells, &obstacles, &av_vels, &cell_count);
-    opencl_initialise(device_id, params, accel_area, &lbm_context, cells, tmp_cells, obstacles, work_group_size_x, work_group_size_y);
+    //Find bounding box coords of the obstacles
+    int xmin, ymin, xmax, ymax;
+    get_bbox(params, obstacles, &xmin, &ymin, &xmax, &ymax);
+    printf("top-left (%d, %d) :: bottom-right(%d, %d)\n", xmin, ymin, xmax, ymax);
+
+    opencl_initialise(device_id, params, accel_area, &lbm_context, cells, tmp_cells, obstacles, work_group_size_x, work_group_size_y, xmin, ymin, xmax, ymax);
 
     // Need to explicitly call first accelerate_flow
     accelerate_flow(params,accel_area,cells,obstacles);
@@ -144,14 +149,6 @@ int main(int argc, char* argv[])
         #endif
     }
 
-    FILE* cells_file = fopen("cells", "w");
-    if(cells_file == NULL)
-    {
-      printf("Unable to create cells file!\n");
-    } else {
-      writeCellsFile(&params, cells_file, cells);
-    }
-
     const float last_av_vel = av_vels[params.max_iters - 1];
 
     // Do not remove this, or the timing will be incorrect!
@@ -179,6 +176,28 @@ int main(int argc, char* argv[])
     return EXIT_SUCCESS;
 }
 
+void get_bbox(const param_t params, char* obstacles, int* xmin, int* ymin, int* xmax, int* ymax)
+{
+  int ii, jj;
+  *xmin = params.nx;
+  *ymin = params.ny;
+  *xmax = 0;
+  *ymax = 0;
+  for(ii = 0; ii < params.ny; ii++)
+  {
+    for(jj = 0; jj < params.nx; jj++)
+    {
+      int index = ii * params.nx + jj;
+      if(!obstacles[index])
+      {
+        if(ii < *xmin) *xmin = ii;
+        if(ii > *xmax) *xmax = ii;
+        if(jj < *ymin) *ymin = jj;
+        if(jj > *ymax) *ymax = jj;
+      }
+    }
+  }
+}
 
 void accelerate_flow(const param_t params, const accel_area_t accel_area,
     speed_t* cells, char* obstacles)

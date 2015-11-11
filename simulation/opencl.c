@@ -143,7 +143,9 @@ void list_opencl_platforms(void)
 }
 
 void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
-    lbm_context_t * lbm_context, speed_t * cells, speed_t * tmp_cells, char * obstacles, int work_group_size_x, int work_group_size_y)
+    lbm_context_t * lbm_context, speed_t * cells, speed_t * tmp_cells, char * obstacles,
+    int work_group_size_x, int work_group_size_y,
+    int xmin, int ymin, int xmax, int ymax)
 {
     /* get device etc. */
     cl_platform_id * platforms = NULL;
@@ -265,6 +267,9 @@ void opencl_initialise(int device_id, param_t params, accel_area_t accel_area,
     // Default wg size is 32x32, however these can also be specified on the command line
     lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_X = (work_group_size_x == 0) ? 32 : work_group_size_x;
     lbm_context->kernels[0].dimensions.WORK_GROUP_SIZE_Y = (work_group_size_y == 0) ? 4 : work_group_size_y;
+
+    //int bbox_sz_x = xmax - xmin;
+    //int bbox_sz_y = ymax - ymin;
 
     // Problem size is params.nx by params.ny iff. each is divisible by the corresponding wg size.
     // Otherwise, it is padded to the nearest multiple of the corresponding wg size.
