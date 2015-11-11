@@ -68,7 +68,7 @@ __kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __loc
     x_w = (jj == 0) ? (jj + params.nx - 1) : (jj - 1);
 
     // PROPAGATE STEP
-    tmp[0] = cells[ii *params.nx + jj].speeds[0];                //central cell
+    tmp[0] = cells[ii *params.nx + jj].speeds[0];   //central cell
     tmp[1] = cells[ii *params.nx + x_w].speeds[1];  //east speed from west-side cell
     tmp[2] = cells[y_s*params.nx + jj].speeds[2];   //north speed from south-side cell
     tmp[3] = cells[ii *params.nx + x_e].speeds[3];  //west speed from east-side cell
@@ -279,5 +279,4 @@ __kernel void d2q9bgk(const param_t params, const accel_area_t accel_area, __loc
   {
     tot_u[wgnum] = sums[0];
   }
-
 }

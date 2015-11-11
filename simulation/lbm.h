@@ -98,6 +98,9 @@ void rebound(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obs
 void collision(const param_t params, speed_t* cells, speed_t* tmp_cells, char* obstacles);
 double av_velocity(const param_t params, speed_t* cells, char* obstacles);
 
+void writeCellsFile(param_t* params, FILE* cells_file, speed_t* cells);
+void writeObstaclesFile(param_t* params, FILE* obstacles_file, char* obstacles);
+
 void setArgs(lbm_context_t* lbm_context,
     speed_t* cells, speed_t* tmp_cells, int GRID_SIZE, int iter_num);
 /* Sum all the densities in the grid.

@@ -108,6 +108,22 @@ int main(int argc, char* argv[])
     gettimeofday(&timstr,NULL);
     tic=timstr.tv_sec+(timstr.tv_usec/1000000.0);
 
+/*    FILE* obstacles_file = fopen("obstacles", "w");
+    if(obstacles_file != NULL)
+    {
+      writeObstaclesFile(&params, obstacles_file, obstacles);
+      fclose(obstacles_file);
+      DIE("DONE");
+    }*/
+
+    FILE* cells_file = fopen("cells", "w");
+    if(cells_file == NULL)
+    {
+      DIE("Unable to create cells file!\n");
+    } else {
+      writeCellsFile(&params, cells_file, cells);
+    }
+
     for (ii = 0; ii < params.max_iters; ii++)
     {/*
       printf("JUST BEFORE TIMESTEP\n");
@@ -123,6 +139,11 @@ int main(int argc, char* argv[])
             cells[print_cell_index*params.nx + print_cell_index].speeds[7],
             cells[print_cell_index*params.nx + print_cell_index].speeds[8]);*/
         av_vels[ii] = timestep(params, accel_area, &lbm_context, &cells, &tmp_cells, obstacles, ii, cell_count);
+        if(ii % 50 == 0)
+        {
+          writeCellsFile(&params, cells_file, cells);
+        }
+
         //if(ii == 5) break;
 
         /*printf("JUST AFTER TIMESTEP\n");
@@ -143,6 +164,10 @@ int main(int argc, char* argv[])
         printf("tot density: %.12E\n", total_density(params, cells));
         #endif
     }
+
+    fclose(cells_file);
+
+
     const float last_av_vel = av_vels[params.max_iters - 1];
 
     // Do not remove this, or the timing will be incorrect!

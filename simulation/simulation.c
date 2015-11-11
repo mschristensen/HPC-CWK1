@@ -37,8 +37,8 @@ float timestep(const param_t params, const accel_area_t accel_area,
                                  global_work_size, local_work_size, 0, NULL, NULL);
     if (CL_SUCCESS != err) DIE("OpenCL enqueue kernel 1 error %d!\n", err);
     // Only read back the final cell arrays on the last iteration
-    if(iter_num == params.max_iters - 1)
-    {
+    //if(iter_num == params.max_iters - 1)
+    //{
       err  = clEnqueueReadBuffer(lbm_context->queue, lbm_context->kernels[0].args[0],
                                 CL_TRUE, 0,
                                 sizeof(speed_t) * params.nx * params.ny, cells,
@@ -49,7 +49,7 @@ float timestep(const param_t params, const accel_area_t accel_area,
                                 sizeof(speed_t) * params.nx * params.ny, tmp_cells,
                                 0, NULL, NULL);
       if (CL_SUCCESS != err) DIE("OpenCL error reading back tmp_cell arrays %d!\n", err);
-    }
+    //}
 
     // Read back the av_vels data
     cl_float* tot_u = malloc(sizeof(cl_float) * lbm_context->kernels[0].dimensions.NUM_WORK_GROUPS);
